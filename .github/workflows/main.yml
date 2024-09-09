@@ -62,7 +62,6 @@ jobs:
 
           # Compile the kernel and build .deb packages
           make -j$(nproc) bindeb-pkg
-          cp ../*.deb .
 
           
       # Store the generated .deb files as artifacts
@@ -81,7 +80,7 @@ jobs:
         run: |
           # Create directories for live-build configuration
           mkdir -p live-build/config/packages.chroot
-          mv ../*.deb live-build/config/packages.chroot      
+          mv ./*.deb live-build/config/packages.chroot      
           mkdir -p live-build/config/package-lists
 
           # Move custom kernel .deb files to live-build package directory
