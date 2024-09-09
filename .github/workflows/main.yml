@@ -62,14 +62,18 @@ jobs:
 
           # Compile the kernel and build .deb packages
           make -j$(nproc) bindeb-pkg
+          mv ../*.deb ./
           
       # Store the generated .deb files as artifacts
       - name: Upload Kernel .deb Files
         uses: actions/upload-artifact@v4
         with:
           name: kernel-debs
-          include-hidden-files: true
-          path: ../*.deb
+          path: ./*.deb
+          if-no-files-found: warn
+          compression-level: 6
+          overwrite: false
+
 
       # Setup live-build configuration and include the custom kernel and extra packages
       - name: Configure live-build for Debian
