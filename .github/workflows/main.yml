@@ -90,7 +90,7 @@ jobs:
 
           # Configure live-build
           cd live-build
-          lb config --distribution bookworm
+          lb config --distribution bookworm --mirror-bootstrap http://deb.debian.org/debian/
 
       # Build the live image
       - name: Build Debian Live ISO
