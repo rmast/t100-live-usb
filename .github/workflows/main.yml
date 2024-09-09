@@ -97,10 +97,8 @@ jobs:
             --mirror-bootstrap http://deb.debian.org/debian/ \
             --mirror-chroot http://deb.debian.org/debian/ \
             --mirror-chroot-security http://deb.debian.org/debian-security/ \
-            --mirror-chroot-updates http://deb.debian.org/debian/ \
             --mirror-binary http://deb.debian.org/debian/ \
-            --mirror-binary-security http://deb.debian.org/debian-security/ \
-            --mirror-binary-updates http://deb.debian.org/debian/
+            --mirror-binary-security http://deb.debian.org/debian-security/
 
       # Build the live image
       - name: Build Debian Live ISO
