@@ -65,9 +65,10 @@ jobs:
           
       # Store the generated .deb files as artifacts
       - name: Upload Kernel .deb Files
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: kernel-debs
+          include-hidden-files: true
           path: ../*.deb
 
       # Setup live-build configuration and include the custom kernel and extra packages
