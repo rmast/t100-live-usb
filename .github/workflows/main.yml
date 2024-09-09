@@ -62,14 +62,15 @@ jobs:
 
           # Compile the kernel and build .deb packages
           make -j$(nproc) bindeb-pkg
-          mv ../*.deb ./
+          mkdir -p live-build/config/packages.chroot
+          mv ../*.deb live-build/config/packages.chroot
           
       # Store the generated .deb files as artifacts
       - name: Upload Kernel .deb Files
         uses: actions/upload-artifact@v4
         with:
           name: kernel-debs
-          path: ./*.deb
+          path: live-build/config/packages.chroot/*.deb
           if-no-files-found: warn
           compression-level: 6
           overwrite: false
@@ -79,12 +80,10 @@ jobs:
       - name: Configure live-build for Debian
         run: |
           # Create directories for live-build configuration
-          mkdir -p live-build/config/packages.chroot
+          
           mkdir -p live-build/config/package-lists
 
           # Move custom kernel .deb files to live-build package directory
-          mv ./*.deb live-build/config/packages.chroot/
-
           # Include additional packages (add more packages as needed)
           echo "efivar" > live-build/config/package-lists/my.list.chroot
           echo "efibootmgr" >> live-build/config/package-lists/my.list.chroot
