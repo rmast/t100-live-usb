@@ -98,7 +98,8 @@ jobs:
             --mirror-chroot http://deb.debian.org/debian/ \
             --mirror-chroot-security http://deb.debian.org/debian-security/ \
             --mirror-binary http://deb.debian.org/debian/ \
-            --mirror-binary-security http://deb.debian.org/debian-security/
+            --mirror-binary-security http://deb.debian.org/debian-security/ \
+            --packages gpg
 
       # Build the live image
       - name: Build Debian Live ISO
