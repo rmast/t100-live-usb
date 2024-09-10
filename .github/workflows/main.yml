@@ -27,8 +27,8 @@ jobs:
           #I will consider tweaking it later if necessary.
 
           set -e
-          sudo lb config noauto "${@}"
+          sudo -i lb config noauto "${@}"
 
 
           #Add more stuff later.
-          sudo lb build noauto "${@}"
+          sudo -i lb build noauto "${@}"
