@@ -18,21 +18,8 @@ jobs:
         
         wget https://ftp.debian.org/debian/pool/main/l/live-build/live-build_20240810_all.deb
         sudo dpkg -i live-build_20240810_all.deb
-
     - name: Configure live-build
-      run: |
-        lb config -d focal --debian-installer none --archive-areas "main contrib non-free" --debootstrap-options "--keyring=/usr/share/keyrings/debian-archive-keyring.gpg --variant=minbase"
-        echo "deb http://packages.linuxmint.com una main upstream import backport" | sudo tee -a config/package-lists/mint.list.chroot
-        echo "deb http://archive.ubuntu.com/ubuntu focal main restricted universe multiverse" | sudo tee -a config/package-lists/mint.list.chroot
-        echo "deb http://archive.ubuntu.com/ubuntu focal-updates main restricted universe multiverse" | sudo tee -a config/package-lists/mint.list.chroot
-        echo "deb http://archive.ubuntu.com/ubuntu focal-backports main restricted universe multiverse" | sudo tee -a config/package-lists/mint.list.chroot
-        echo "deb http://security.ubuntu.com/ubuntu focal-security main restricted universe multiverse" | sudo tee -a config/package-lists/mint.list.chroot
-        
+      run: lb config -d bookworm --debian-installer none --archive-areas "main contrib non-free" --debootstrap-options "--keyring=/usr/share/keyrings/debian-archive-keyring.gpg --variant=minbase"
+
     - name: Build live image
       run: sudo lb build
-
-    - name: Upload ISO artifact
-      uses: actions/upload-artifact@v3
-      with:
-        name: live-image
-        path: ./live-image-amd64.hybrid.iso
