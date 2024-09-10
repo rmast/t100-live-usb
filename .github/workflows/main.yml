@@ -21,66 +21,66 @@ jobs:
       # Install necessary dependencies
       - name: lb config
         run: |
-          lb config noauto \
-          --mirror-bootstrap https://ftp.riken.jp/Linux/debian/debian/ \
-          --archive-areas "main contrib non-free-firmware" \
+          sudo lb config \
+          --mode "ubuntu" \
           --architecture amd64 \
-          --linux-flavours amd64 \
-          --distribution bookworm \
-          --checksums md5 \
-          --debian-installer live \
-          --debian-installer-gui false \
-          --debian-installer-distribution bookworm \
-          --memtest memtest86+ \
-          --firmware-binary true \
-          --firmware-chroot true \
-          "${@}"
-
-
-            
-            
-
-          #~ Standard entries for creating Live Image.
-          echo "live-boot" > config/package-lists/live.list.chroot
-          echo "live-config" >> config/package-lists/live.list.chroot
-          echo "live-config-systemd" >> config/package-lists/live.list.chroot
+          --distribution focal \
+          --archive-areas "main universe multiverse" \
+          --binary-images iso-hybrid \
+          --linux-flavours "generic" \
+          --linux-packages "linux" \
+          --parent-distribution "focal" \
+          --parent-debian-installer-distribution focal \
+          --parent-archive-areas "main universe multiverse" \
+          --apt-options "--yes --allow-remove-essential" \
+          --apt-recommends "false" \
+          --bootappend-live "boot=casper hostname=ubuntu username=ubuntu debian-installer/language=de keyboard-configuration/layoutcode=de fsck.mode=skip" \
+          --bootappend-live-failsafe "boot=casper hostname=ubuntu username=ubuntu debian-installer/language=de keyboard-configuration/layoutcode=de fsck.mode=skip nomodeset" \
+          --iso-application "Ubuntu live" \
+          --initramfs-compression "lz4" \
+          --parent-mirror-bootstrap "http://archive.ubuntu.com/ubuntu/" \
+          --parent-mirror-chroot "http://archive.ubuntu.com/ubuntu/" \
+          --parent-mirror-chroot-security "http://security.ubuntu.com/ubuntu/" \
+          --parent-mirror-binary "http://archive.ubuntu.com/ubuntu/" \
+          --parent-mirror-binary-security "http://security.ubuntu.com/ubuntu/" \
+          --parent-mirror-debian-installer "http://archive.ubuntu.com/ubuntu/" \
+          --mirror-bootstrap "http://archive.ubuntu.com/ubuntu/" \
+          --mirror-chroot "http://archive.ubuntu.com/ubuntu/" \
+          --mirror-chroot-security "http://security.ubuntu.com/ubuntu/" \
+          --mirror-binary "http://archive.ubuntu.com/ubuntu/" \
+          --mirror-binary-security "http://security.ubuntu.com/ubuntu/" \
+          --mirror-debian-installer "http://archive.ubuntu.com/ubuntu/" \
+          --keyring-packages "ubuntu-keyring" \
+          --zsync="false"
           
-          #~ Ensure I have all grub packages to allow booting "bios" or "uefi".
-          echo grub-common grub2-common grub-pc-bin efibootmgr grub-efi-amd64 grub-efi-amd64-bin grub-efi-amd64-signed grub-efi-ia32-bin libefiboot1 libefivar1 mokutil shim-helpers-amd64-signed shim-signed-common shim-unsigned > config/package-lists/grubuefi.list.binary
+          ## netplan dhcp ##
+          ## Namen der Netzwerkschnittstelle bitt anpassen ###
+          cat <<END > config/hooks/live/01-network-dhcp.chroot
+          #!/bin/sh
+          cat <<EOF > /etc/netplan/01-network-dhcp.yaml
+          network:
+           ethernets:
+            enp0s3:
+             dhcp4: true
+           version: 2
+          EOF
+          END
+          chmod 755 config/hooks/live/01-network-dhcp.chroot
           
-          #~ My personal selection of packages, here you can modify to your own preference.
-          if [ ! -f config/packages.lists/desktop.list.chroot ]; then
-            echo "xfce4 \
-            amd64-microcode \
-            bash-completion \
-            command-not-found \
-            conky-all \
-            curl \
-            filezilla \
-            firmware-linux \
-            firmware-linux-free \
-            firmware-linux-nonfree \
-            firmware-misc-nonfree \
-            galculator \
-            geany \
-            gparted \
-            hardinfo \
-            intel-microcode \
-            inxi \
-            lightdm \
-            mc \
-            meld \
-            mpv \
-            network-manager-gnome \
-            openssh-client \
-            rsync  \
-            simplescreenrecorder \
-            synaptic \
-            terminator \
-            wget \
-            xfce4-goodies \
-            xfce4-terminal" > config/package-lists/desktop.list.chroot
-          fi
+          ## Ubuntu Desktop mit NetworkManager
+          ##cat <<END > config/hooks/live/01-network-manager.chroot
+          ##!/bin/sh
+          ##cat << EOF > /etc/netplan/01-network-manager-all.yaml
+          ##network:
+          ##  version: 2
+          ##  renderer: NetworkManager
+          ##EOF
+          ##END
+          ##chmod 755 config/hooks/live/01-network-manager.chroot
           
-          #~ Build the image.
+          # ubuntu casper boot scripts & Midnight Commander
+          cat <<EOF > config/package-lists/extra.list.chroot
+          liblz4-tool
+          mc
+          EOF
           sudo lb build
