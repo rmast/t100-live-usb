@@ -27,16 +27,8 @@ jobs:
           #I will consider tweaking it later if necessary.
 
           set -e
-          sudo lb config noauto \
-          	--distribution bookworm \
-          	--architecture amd64 \
-          	--debian-installer live \
-          	--debian-installer-distribution bookworm \
-          	--linux-flavours "amd64" \
-          	--archive-areas "main contrib non-free-firmware non-free" \
-          	--apt-recommends false \
-          	--apt-source-archives true \
-          	"${@}"
+          sudo lb config noauto "${@}"
+
 
           #Add more stuff later.
           sudo lb build noauto "${@}"
