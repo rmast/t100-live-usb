@@ -24,3 +24,9 @@ jobs:
 
     - name: Build live image
       run: sudo lb build
+
+    - name: Upload ISO artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: live-image
+        path: ./live-image-amd64.hybrid.iso
