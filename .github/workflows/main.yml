@@ -1,34 +1,20 @@
-name: Build Debian Live with Custom Kernel
+name: Build Live Image
 
-on:
-  push:
-    branches:
-      - main
-  workflow_dispatch:
+on: [push]
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-      # Checkout the repository
-      - name: Checkout code
-        uses: actions/checkout@v3
-      - name: Install Dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y build-essential fakeroot libncurses5-dev libssl-dev ccache bison flex libelf-dev libudev-dev libpci-dev libiberty-dev debhelper live-build dpkg-dev debootstrap gpg
-      # Install necessary dependencies
-      - name: lb config
-        run: |
-          #!/bin/sh
+    - name: Checkout code
+      uses: actions/checkout@v2
 
-          #This was the default one from /usr/share/doc/live-build/examples/auto
-          #I will consider tweaking it later if necessary.
+    - name: Install live-build
+      run: sudo apt-get update && sudo apt-get install -y live-build
 
-          set -e
-          sudo -i lb config noauto "${@}"
+    - name: Configure live-build
+      run: lb config -d bullseye --debian-installer none --archive-areas "main contrib non-free" --debootstrap-options "--variant=minbase"
 
-
-          #Add more stuff later.
-          sudo -i lb build noauto "${@}"
+    - name: Build live image
+      run: sudo lb build
