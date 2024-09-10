@@ -14,7 +14,7 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get install -y wget
-        wget http://ftp.debian.org/debian/pool/main/l/live-build/live-build_20230601_all.deb
+        wget https://ftp.debian.org/debian/pool/main/l/live-build/live-build_20240810_all.deb
         sudo dpkg -i live-build_20230601_all.deb
 
     - name: Configure live-build
