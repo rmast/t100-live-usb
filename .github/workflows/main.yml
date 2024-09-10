@@ -22,7 +22,6 @@ jobs:
       - name: lb config
         run: |
           lb config noauto \
-          --image-name 'lb-nolivepkgs-noarmfirmware-noguiinstaller' \
           --mirror-bootstrap https://ftp.riken.jp/Linux/debian/debian/ \
           --archive-areas "main contrib non-free-firmware" \
           --architecture amd64 \
