@@ -100,6 +100,7 @@ jobs:
             --mirror-bootstrap http://deb.debian.org/debian/ \
             --mirror-chroot http://deb.debian.org/debian/ \
             --mirror-chroot-security http://deb.debian.org/debian-security/ \
+            --keyring-packages "debian-archive-keyring" \
             --mirror-binary http://deb.debian.org/debian/ \
             --mirror-binary-security http://deb.debian.org/debian-security/
 
@@ -107,7 +108,7 @@ jobs:
       - name: Build Debian Live ISO
         run: |
           cd live-build
-          sudo DEBOOTSTRAP_OPTIONS="--keyring=http://deb.debian.org/debian/dists/bookworm/Release.gpg" lb build
+          sudo lb build
 
       # Upload the live image ISO as an artifact
       - name: Upload Live ISO
