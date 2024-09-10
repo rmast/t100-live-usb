@@ -14,9 +14,12 @@ jobs:
       # Checkout the repository
       - name: Checkout code
         uses: actions/checkout@v3
-
-      # Install necessary dependencies
       - name: Install Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential fakeroot libncurses5-dev libssl-dev ccache bison flex libelf-dev libudev-dev libpci-dev libiberty-dev debhelper live-build dpkg-dev debootstrap gpg
+      # Install necessary dependencies
+      - name: lb config
         run: |
           lb config --binary-images iso-hybrid --mode debian -d bookworm -a amd64 -k amd64 --linux-packages "linux-image linux-headers" --archive-areas "main contrib non-free non-free-firmware" --cache true --apt-recommends true --debian-installer live --debian-installer-gui true --win32-loader false --bootappend-live "boot=live components live-config.locales=en_GB.UTF-8 live-config.timezone=Europe/London live-config.keyboard-layouts=gb live-config.user-default-groups=cdrom,floppy,audio,video,plugdev,netdev,dialout" --iso-application "Debian Bookworm" --iso-preparer "Dai Trying" --iso-publisher "Dai Trying" --image-name "DaiOs" \
           --mirror-binary http://deb.debian.org/debian/ \
