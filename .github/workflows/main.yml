@@ -15,7 +15,7 @@ jobs:
         sudo apt-get update
         sudo apt-get install -y wget
         wget https://ftp.debian.org/debian/pool/main/l/live-build/live-build_20240810_all.deb
-        sudo dpkg -i live-build_20230601_all.deb
+        sudo dpkg -i live-build_20240810_all.deb
 
     - name: Configure live-build
       run: lb config -d bullseye --debian-installer none --archive-areas "main contrib non-free" --debootstrap-options "--variant=minbase"
