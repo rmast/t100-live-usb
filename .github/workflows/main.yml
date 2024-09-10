@@ -18,8 +18,9 @@ jobs:
         
         wget https://ftp.debian.org/debian/pool/main/l/live-build/live-build_20240810_all.deb
         sudo dpkg -i live-build_20240810_all.deb
+
     - name: Configure live-build
-      run: lb config -d bookworm --debian-installer none --archive-areas "main contrib non-free" --debootstrap-options "--keyring=/usr/share/keyrings/debian-archive-keyring.gpg --variant=minbase"
+      run: lb config -d testing --debian-installer none --archive-areas "main contrib non-free" --debootstrap-options "--keyring=/usr/share/keyrings/debian-archive-keyring.gpg --variant=minbase"
 
     - name: Build live image
       run: sudo lb build
