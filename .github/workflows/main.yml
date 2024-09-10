@@ -87,6 +87,7 @@ jobs:
           # Include additional packages (add more packages as needed)
           echo "efivar" > live-build/config/package-lists/my.list.chroot
           echo "efibootmgr" >> live-build/config/package-lists/my.list.chroot
+          echo "gpg" >> live-build/config/package-lists/my.list.chroot
       
       # Configure live-build for Debian 12 (Bookworm)
       - name: Configure live-build for Debian 12
@@ -98,8 +99,7 @@ jobs:
             --mirror-chroot http://deb.debian.org/debian/ \
             --mirror-chroot-security http://deb.debian.org/debian-security/ \
             --mirror-binary http://deb.debian.org/debian/ \
-            --mirror-binary-security http://deb.debian.org/debian-security/ \
-            --packages gpg
+            --mirror-binary-security http://deb.debian.org/debian-security/
 
       # Build the live image
       - name: Build Debian Live ISO
