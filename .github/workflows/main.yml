@@ -21,6 +21,12 @@ jobs:
       # Install necessary dependencies
       - name: lb config
         run: |
+          #!/bin/sh
+
+          #This was the default one from /usr/share/doc/live-build/examples/auto
+          #I will consider tweaking it later if necessary.
+
+          set -e
           sudo lb config noauto \
           	--distribution bookworm \
           	--architecture amd64 \
