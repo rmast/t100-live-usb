@@ -18,101 +18,49 @@ jobs:
       # Install necessary dependencies
       - name: Install Dependencies
         run: |
-          sudo apt-get update
-          sudo apt-get install -y build-essential fakeroot libncurses5-dev libssl-dev ccache bison flex libelf-dev libudev-dev libpci-dev libiberty-dev debhelper live-build dpkg-dev debootstrap gpg
+          lb config --binary-images iso-hybrid --mode debian -d bookworm -a amd64 -k amd64 --linux-packages "linux-image linux-headers" --archive-areas "main contrib non-free non-free-firmware" --cache true --apt-recommends true --debian-installer live --debian-installer-gui true --win32-loader false --bootappend-live "boot=live components live-config.locales=en_GB.UTF-8 live-config.timezone=Europe/London live-config.keyboard-layouts=gb live-config.user-default-groups=cdrom,floppy,audio,video,plugdev,netdev,dialout" --iso-application "Debian Bookworm" --iso-preparer "Dai Trying" --iso-publisher "Dai Trying" --image-name "DaiOs" --mirror-binary http://192.168.1.17/debian/ --mirror-binary-security http://192.168.1.17/debian-security/ --mirror-bootstrap http://192.168.1.17/debian/ --mirror-chroot-security http://192.168.1.17/debian-security/
 
-      # Download and compile the custom kernel
-      - name: Download and Compile Custom Kernel
-        run: |
-          # Define the kernel version
-          KERNEL_VERSION=6.10.7
-
-          # Download the kernel source
-          wget https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-${KERNEL_VERSION}.tar.xz
-          tar -xvf linux-${KERNEL_VERSION}.tar.xz
-          cd linux-${KERNEL_VERSION}
-
-          # Generate default config
-          make defconfig
-
-          # Automatically modify the .config file to set the required parameters
-          # Enable and set the following kernel options
-          sed -i 's/# CONFIG_IPU_BRIDGE is not set/CONFIG_IPU_BRIDGE=y/' .config
-          sed -i 's/# CONFIG_VIDEO_INTEL_IPU6 is not set/CONFIG_VIDEO_INTEL_IPU6=y/' .config
-          sed -i 's/# CONFIG_INTEL_VSC is not set/CONFIG_INTEL_VSC=y/' .config
-          sed -i 's/# CONFIG_VIDEO_IPU3_CIO2 is not set/CONFIG_VIDEO_IPU3_CIO2=y/' .config
-          sed -i 's/# CONFIG_VIDEO_ATOMISP is not set/CONFIG_VIDEO_ATOMISP=y/' .config
-          sed -i 's/# CONFIG_VIDEO_ATOMISP_OV2722 is not set/CONFIG_VIDEO_ATOMISP_OV2722=y/' .config
-          sed -i 's/# CONFIG_VIDEO_ATOMISP_GC2235 is not set/CONFIG_VIDEO_ATOMISP_GC2235=y/' .config
-          sed -i 's/# CONFIG_VIDEO_ATOMISP_MSRLIST_HELPER is not set/CONFIG_VIDEO_ATOMISP_MSRLIST_HELPER=y/' .config
-          sed -i 's/# CONFIG_VIDEO_ATOMISP_MT9M114 is not set/CONFIG_VIDEO_ATOMISP_MT9M114=y/' .config
-          sed -i 's/# CONFIG_VIDEO_ATOMISP_GC0310 is not set/CONFIG_VIDEO_ATOMISP_GC0310=y/' .config
-
-          # Alternatively, append to the config if they aren't present at all
-          echo "CONFIG_IPU_BRIDGE=y" >> .config
-          echo "CONFIG_VIDEO_INTEL_IPU6=y" >> .config
-          echo "CONFIG_INTEL_VSC=y" >> .config
-          echo "CONFIG_VIDEO_IPU3_CIO2=y" >> .config
-          echo "CONFIG_VIDEO_ATOMISP=y" >> .config
-          echo "CONFIG_VIDEO_ATOMISP_OV2722=y" >> .config
-          echo "CONFIG_VIDEO_ATOMISP_GC2235=y" >> .config
-          echo "CONFIG_VIDEO_ATOMISP_MSRLIST_HELPER=y" >> .config
-          echo "CONFIG_VIDEO_ATOMISP_MT9M114=y" >> .config
-          echo "CONFIG_VIDEO_ATOMISP_GC0310=y" >> .config
-
-          # Compile the kernel and build .deb packages
-          make -j$(nproc) bindeb-pkg
-
+          #~ Standard entries for creating Live Image.
+          echo "live-boot" > config/package-lists/live.list.chroot
+          echo "live-config" >> config/package-lists/live.list.chroot
+          echo "live-config-systemd" >> config/package-lists/live.list.chroot
           
-      # Store the generated .deb files as artifacts
-      - name: Upload Kernel .deb Files
-        uses: actions/upload-artifact@v4
-        with:
-          name: kernel-debs
-          path: ./*.deb
-          if-no-files-found: warn
-          compression-level: 6
-          overwrite: false
-
-
-      # Setup live-build configuration and include the custom kernel and extra packages
-      - name: Configure live-build for Debian
-        run: |
-          # Create directories for live-build configuration
-          mkdir -p live-build/config/packages.chroot
-          mv ./*.deb live-build/config/packages.chroot      
-          mkdir -p live-build/config/package-lists
-
-          # Move custom kernel .deb files to live-build package directory
-          # Include additional packages (add more packages as needed)
-          echo "efivar" > live-build/config/package-lists/my.list.chroot
-          echo "efibootmgr" >> live-build/config/package-lists/my.list.chroot
-          echo "debian-keyring" >> live-build/config/package-lists/my.list.chroot
-          echo "debian-archive-keyring" >> live-build/config/package-lists/my.list.chroot
-          echo "gpg" >> live-build/config/package-lists/my.list.chroot
-      
-      # Configure live-build for Debian 12 (Bookworm)
-      - name: Configure live-build for Debian 12
-        run: |
-          cd live-build
-          lb config \
-            --distribution bookworm \
-            --mirror-bootstrap http://deb.debian.org/debian/ \
-            --mirror-chroot http://deb.debian.org/debian/ \
-            --mirror-chroot-security http://deb.debian.org/debian-security/ \
-            --keyring-packages "debian-archive-keyring" \
-            --mirror-binary http://deb.debian.org/debian/ \
-            --mirror-binary-security http://deb.debian.org/debian-security/
-
-      # Build the live image
-      - name: Build Debian Live ISO
-        run: |
-          cd live-build
+          #~ Ensure I have all grub packages to allow booting "bios" or "uefi".
+          echo grub-common grub2-common grub-pc-bin efibootmgr grub-efi-amd64 grub-efi-amd64-bin grub-efi-amd64-signed grub-efi-ia32-bin libefiboot1 libefivar1 mokutil shim-helpers-amd64-signed shim-signed-common shim-unsigned > config/package-lists/grubuefi.list.binary
+          
+          #~ My personal selection of packages, here you can modify to your own preference.
+          if [ ! -f config/packages.lists/desktop.list.chroot ]; then
+            echo "xfce4 \
+            amd64-microcode \
+            bash-completion \
+            command-not-found \
+            conky-all \
+            curl \
+            filezilla \
+            firmware-linux \
+            firmware-linux-free \
+            firmware-linux-nonfree \
+            firmware-misc-nonfree \
+            galculator \
+            geany \
+            gparted \
+            hardinfo \
+            intel-microcode \
+            inxi \
+            lightdm \
+            mc \
+            meld \
+            mpv \
+            network-manager-gnome \
+            openssh-client \
+            rsync  \
+            simplescreenrecorder \
+            synaptic \
+            terminator \
+            wget \
+            xfce4-goodies \
+            xfce4-terminal" > config/package-lists/desktop.list.chroot
+          fi
+          
+          #~ Build the image.
           sudo lb build
-
-      # Upload the live image ISO as an artifact
-      - name: Upload Live ISO
-        uses: actions/upload-artifact@v3
-        with:
-          name: debian-live-custom.iso
-          path: live-build/*.iso
