@@ -21,10 +21,21 @@ jobs:
       # Install necessary dependencies
       - name: lb config
         run: |
-          lb config --binary-images iso-hybrid --mode debian -d bookworm -a amd64 -k amd64 --linux-packages "linux-image linux-headers" --archive-areas "main contrib non-free non-free-firmware" --cache true --apt-recommends true --debian-installer live --debian-installer-gui true --win32-loader false --bootappend-live "boot=live components live-config.locales=en_GB.UTF-8 live-config.timezone=Europe/London live-config.keyboard-layouts=gb live-config.user-default-groups=cdrom,floppy,audio,video,plugdev,netdev,dialout" --iso-application "Debian Bookworm"  \
-          --mirror-binary 'https://deb.debian.org/debian' \
-          --mirror-binary-security 'https://security.debian.org/debian-security' \
-          --mirror-bootstrap 'https://deb.debian.org/debian' 
+          lb config noauto \
+          --image-name 'lb-nolivepkgs-noarmfirmware-noguiinstaller' \
+          --mirror-bootstrap https://ftp.riken.jp/Linux/debian/debian/ \
+          --archive-areas "main contrib non-free-firmware" \
+          --architecture amd64 \
+          --linux-flavours amd64 \
+          --distribution bookworm \
+          --checksums md5 \
+          --debian-installer live \
+          --debian-installer-gui false \
+          --debian-installer-distribution bookworm \
+          --memtest memtest86+ \
+          --firmware-binary true \
+          --firmware-chroot true \
+          "${@}"
 
 
             
