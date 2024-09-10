@@ -22,10 +22,10 @@ jobs:
       - name: lb config
         run: |
           lb config --binary-images iso-hybrid --mode debian -d bookworm -a amd64 -k amd64 --linux-packages "linux-image linux-headers" --archive-areas "main contrib non-free non-free-firmware" --cache true --apt-recommends true --debian-installer live --debian-installer-gui true --win32-loader false --bootappend-live "boot=live components live-config.locales=en_GB.UTF-8 live-config.timezone=Europe/London live-config.keyboard-layouts=gb live-config.user-default-groups=cdrom,floppy,audio,video,plugdev,netdev,dialout" --iso-application "Debian Bookworm"  \
-          --mirror-binary http://deb.debian.org/debian/ \
-          --mirror-binary-security http://security.debian.org/debian-security/ \
-          --mirror-bootstrap http://deb.debian.org/debian/ \
-          --mirror-chroot-security http://security.debian.org/debian-security/ 
+          --mirror-binary https://deb.debian.org/debian/ \
+          --mirror-binary-security https://security.debian.org/debian-security/ \
+          --mirror-bootstrap https://deb.debian.org/debian/ \
+          --mirror-chroot-security https://security.debian.org/debian-security/ 
 
             
             
