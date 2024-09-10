@@ -107,7 +107,7 @@ jobs:
       - name: Build Debian Live ISO
         run: |
           cd live-build
-          sudo lb build
+          sudo DEBOOTSTRAP_OPTIONS="--keyring=http://deb.debian.org/debian/dists/bookworm/Release.gpg" lb build
 
       # Upload the live image ISO as an artifact
       - name: Upload Live ISO
