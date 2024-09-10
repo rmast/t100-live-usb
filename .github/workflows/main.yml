@@ -87,6 +87,8 @@ jobs:
           # Include additional packages (add more packages as needed)
           echo "efivar" > live-build/config/package-lists/my.list.chroot
           echo "efibootmgr" >> live-build/config/package-lists/my.list.chroot
+          echo "debian-keyring" >> live-build/config/package-lists/my.list.chroot
+          echo "debian-archive-keyring" >> live-build/config/package-lists/my.list.chroot
           echo "gpg" >> live-build/config/package-lists/my.list.chroot
       
       # Configure live-build for Debian 12 (Bookworm)
