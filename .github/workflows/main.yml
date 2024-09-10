@@ -18,7 +18,14 @@ jobs:
       # Install necessary dependencies
       - name: Install Dependencies
         run: |
-          lb config --binary-images iso-hybrid --mode debian -d bookworm -a amd64 -k amd64 --linux-packages "linux-image linux-headers" --archive-areas "main contrib non-free non-free-firmware" --cache true --apt-recommends true --debian-installer live --debian-installer-gui true --win32-loader false --bootappend-live "boot=live components live-config.locales=en_GB.UTF-8 live-config.timezone=Europe/London live-config.keyboard-layouts=gb live-config.user-default-groups=cdrom,floppy,audio,video,plugdev,netdev,dialout" --iso-application "Debian Bookworm" --iso-preparer "Dai Trying" --iso-publisher "Dai Trying" --image-name "DaiOs" --mirror-binary http://192.168.1.17/debian/ --mirror-binary-security http://192.168.1.17/debian-security/ --mirror-bootstrap http://192.168.1.17/debian/ --mirror-chroot-security http://192.168.1.17/debian-security/
+          lb config --binary-images iso-hybrid --mode debian -d bookworm -a amd64 -k amd64 --linux-packages "linux-image linux-headers" --archive-areas "main contrib non-free non-free-firmware" --cache true --apt-recommends true --debian-installer live --debian-installer-gui true --win32-loader false --bootappend-live "boot=live components live-config.locales=en_GB.UTF-8 live-config.timezone=Europe/London live-config.keyboard-layouts=gb live-config.user-default-groups=cdrom,floppy,audio,video,plugdev,netdev,dialout" --iso-application "Debian Bookworm" --iso-preparer "Dai Trying" --iso-publisher "Dai Trying" --image-name "DaiOs" \
+          --mirror-binary http://deb.debian.org/debian/ \
+          --mirror-binary-security http://deb.debian.org/debian-security/ \
+          --mirror-bootstrap http://deb.debian.org/debian/ \
+          --mirror-chroot-security http://deb.debian.org/debian-security/ 
+
+            
+            
 
           #~ Standard entries for creating Live Image.
           echo "live-boot" > config/package-lists/live.list.chroot
