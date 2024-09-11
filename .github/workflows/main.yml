@@ -90,10 +90,10 @@ jobs:
           set -e
           
           # Install the custom kernel
-          dpkg -i /config/packages.chroot/linux-image-6.10.7_*.deb
+          dpkg -i /live-build/config/packages.chroot/linux-image-6.10.7_*.deb
           
           # Replace the default initrd with our custom one
-          cp /config/packages.chroot/initrd.img-6.10.7-custom /boot/initrd.img-6.10.7
+          cp /live-build/config/packages.chroot/initrd.img-6.10.7-custom /boot/initrd.img-6.10.7
           
           # Update GRUB to use the new kernel and initrd
           update-grub
