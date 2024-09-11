@@ -65,7 +65,7 @@ jobs:
       uses: actions/upload-artifact@v3
       with:
           name: kernel-debs
-          path: ../*.deb
+          path: ./*.deb
     - name: Clean up previous build
       run: sudo lb clean
 
@@ -77,7 +77,7 @@ jobs:
           mkdir -p live-build/config/package-lists
 
           # Move custom kernel .deb files to live-build package directory
-          mv ../*.deb live-build/config/packages.chroot/
+          mv ./*.deb live-build/config/packages.chroot/
 
           # Include additional packages (add more packages as needed)
           echo "efivar" > live-build/config/package-lists/my.list.chroot
