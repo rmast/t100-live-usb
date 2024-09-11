@@ -71,19 +71,23 @@ jobs:
 
     - name: Configure live-build for Debian with Custom Kernel and Initrd
       run: |
-        mkdir -p live-build/config/packages.chroot
-        mkdir -p live-build/config/package-lists
-        mkdir -p live-build/config/hooks/normal
-        mkdir -p live-build/config/includes.chroot/etc/default
+        mkdir -p live-build
+        cd live-build
+        
+        # Initialize live-build configuration
+        sudo lb config --distribution bookworm --archive-areas "main contrib non-free" --debian-installer none
+        
+        # Create necessary directories
+        mkdir -p config/packages.chroot config/package-lists config/hooks/normal config/includes.chroot/etc/default
 
         # Copy custom kernel .deb files to live-build package directory
-        cp custom-kernel-debs/*.deb live-build/config/packages.chroot/
+        cp ../custom-kernel-debs/*.deb config/packages.chroot/
         
         # Copy custom initrd to live-build package directory
-        cp initrd.img-6.10.7-custom live-build/config/packages.chroot/
+        cp ../initrd.img-6.10.7-custom config/packages.chroot/
         
         # Create package list
-        cat << EOF > live-build/config/package-lists/my.list.chroot
+        cat << EOF > config/package-lists/my.list.chroot
         efivar
         efibootmgr
         grub-pc
@@ -92,10 +96,10 @@ jobs:
         EOF
         
         # Create GRUB default configuration
-        echo 'GRUB_TIMEOUT=5' > live-build/config/includes.chroot/etc/default/grub
+        echo 'GRUB_TIMEOUT=5' > config/includes.chroot/etc/default/grub
         
         # Create a hook to install custom kernel and update initramfs
-        cat << EOF > live-build/config/hooks/normal/0100-update-initramfs.hook.chroot
+        cat << EOF > config/hooks/normal/0100-update-initramfs.hook.chroot
         #!/bin/sh
         set -e
         
@@ -113,19 +117,28 @@ jobs:
         update-grub
         EOF
         
-        chmod +x live-build/config/hooks/normal/0100-update-initramfs.hook.chroot
-        
-        cd live-build    
-        
-        sudo lb config -d bookworm --debian-installer none --archive-areas "main contrib non-free" \
-          --debootstrap-options "--keyring=/usr/share/keyrings/debian-archive-keyring.gpg --variant=minbase"
+        chmod +x config/hooks/normal/0100-update-initramfs.hook.chroot
 
     - name: Build Debian Live ISO
       run: |
         cd live-build
         sudo lb clean
+        sudo lb config
         sudo lb build
       continue-on-error: true
+
+    - name: Display build logs
+      if: always()
+      run: |
+        cd live-build
+        if [ -f .build/logs/binary ]; then
+          echo "Binary build log:"
+          cat .build/logs/binary
+        fi
+        if [ -f .build/logs/chroot ]; then
+          echo "Chroot build log:"
+          cat .build/logs/chroot
+        fi
 
     - name: Check for ISO file
       run: |
@@ -133,6 +146,7 @@ jobs:
           echo "ISO file created successfully"
         else
           echo "Error: ISO file not created"
+          ls -R live-build
           exit 1
         fi
 
