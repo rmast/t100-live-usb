@@ -72,56 +72,56 @@ jobs:
           # Move back to the main directory
           cd ..
 
-- name: Configure live-build for Debian with Custom Kernel and Initrd
-  run: |
-    mkdir -p live-build/config/packages.chroot
-    mkdir -p live-build/config/package-lists
-    mkdir -p live-build/config/hooks/normal
-    mkdir -p live-build/config/includes.chroot/etc/default
-
-    # Copy custom kernel .deb files to live-build package directory
-    cp custom-kernel-debs/*.deb live-build/config/packages.chroot/
+    - name: Configure live-build for Debian with Custom Kernel and Initrd
+      run: |
+        mkdir -p live-build/config/packages.chroot
+        mkdir -p live-build/config/package-lists
+        mkdir -p live-build/config/hooks/normal
+        mkdir -p live-build/config/includes.chroot/etc/default
     
-    # Copy custom initrd to live-build package directory
-    cp initrd.img-6.10.7-custom live-build/config/packages.chroot/
-    
-    # Create package list
-    cat << EOF > live-build/config/package-lists/my.list.chroot
-    efivar
-    efibootmgr
-    grub-pc
-    grub-efi-amd64
-    linux-image-amd64
-    EOF
-    
-    # Create GRUB default configuration
-    echo 'GRUB_TIMEOUT=5' > live-build/config/includes.chroot/etc/default/grub
-    
-    # Create a hook to install custom kernel and update initramfs
-    cat << EOF > live-build/config/hooks/normal/0100-update-initramfs.hook.chroot
-    #!/bin/sh
-    set -e
-    
-    # Install linux-firmware package to address missing firmware warnings
-    apt-get update
-    apt-get install -y linux-firmware
-    
-    # Install the custom kernel
-    dpkg -i /config/packages.chroot/linux-image-6.10.7_*.deb
-    
-    # Update initramfs for the new kernel
-    update-initramfs -c -k 6.10.7
-    
-    # Update GRUB configuration
-    update-grub
-    EOF
-    
-    chmod +x live-build/config/hooks/normal/0100-update-initramfs.hook.chroot
-    
-    cd live-build    
-    
-    lb config -d bookworm --debian-installer none --archive-areas "main contrib non-free" \
-      --debootstrap-options "--keyring=/usr/share/keyrings/debian-archive-keyring.gpg --variant=minbase"
+        # Copy custom kernel .deb files to live-build package directory
+        cp custom-kernel-debs/*.deb live-build/config/packages.chroot/
+        
+        # Copy custom initrd to live-build package directory
+        cp initrd.img-6.10.7-custom live-build/config/packages.chroot/
+        
+        # Create package list
+        cat << EOF > live-build/config/package-lists/my.list.chroot
+        efivar
+        efibootmgr
+        grub-pc
+        grub-efi-amd64
+        linux-image-amd64
+        EOF
+        
+        # Create GRUB default configuration
+        echo 'GRUB_TIMEOUT=5' > live-build/config/includes.chroot/etc/default/grub
+        
+        # Create a hook to install custom kernel and update initramfs
+        cat << EOF > live-build/config/hooks/normal/0100-update-initramfs.hook.chroot
+        #!/bin/sh
+        set -e
+        
+        # Install linux-firmware package to address missing firmware warnings
+        apt-get update
+        apt-get install -y linux-firmware
+        
+        # Install the custom kernel
+        dpkg -i /config/packages.chroot/linux-image-6.10.7_*.deb
+        
+        # Update initramfs for the new kernel
+        update-initramfs -c -k 6.10.7
+        
+        # Update GRUB configuration
+        update-grub
+        EOF
+        
+        chmod +x live-build/config/hooks/normal/0100-update-initramfs.hook.chroot
+        
+        cd live-build    
+        
+        lb config -d bookworm --debian-installer none --archive-areas "main contrib non-free" \
+          --debootstrap-options "--keyring=/usr/share/keyrings/debian-archive-keyring.gpg --variant=minbase"
     
     - name: Prepare chroot environment
       run: |
