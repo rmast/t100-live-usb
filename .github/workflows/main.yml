@@ -62,8 +62,6 @@ jobs:
           sudo mkinitramfs -o ../initrd.img-${KERNEL_VERSION}-custom ${KERNEL_VERSION}-custom
           # Move back to the main directory
           cd ..
-    - name: Clean up previous build
-      run: sudo lb clean
 
     - name: Configure live-build for Debian with Custom Kernel and Initrd
       run: |
