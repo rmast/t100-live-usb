@@ -53,6 +53,10 @@ jobs:
 
           make -j$(nproc) bindeb-pkg
 
+          # Move the kernel packages to a known location
+          mkdir -p ../custom-kernel-debs
+          mv ../*.deb ../custom-kernel-debs/
+
     - name: Create Custom Initrd
       run: |
           KERNEL_VERSION=6.10.7
@@ -70,10 +74,6 @@ jobs:
           # Move back to the main directory
           cd ..
 
-          # Copy the custom initrd to the live-build packages directory
-          mkdir -p live-build/config/packages.chroot
-          cp initrd.img-${KERNEL_VERSION}-custom live-build/config/packages.chroot/
-
     - name: Clean up previous build
       run: sudo lb clean
 
@@ -83,23 +83,25 @@ jobs:
           mkdir -p live-build/config/package-lists
           mkdir -p live-build/config/hooks/normal
 
-          # Move custom kernel .deb files to live-build package directory
-          mv ./*.deb live-build/config/packages.chroot/
+          # Copy custom kernel .deb files to live-build package directory
+          cp custom-kernel-debs/*.deb live-build/config/packages.chroot/
+
+          # Copy custom initrd to live-build package directory
+          cp initrd.img-6.10.7-custom live-build/config/packages.chroot/
 
           echo "efivar" > live-build/config/package-lists/my.list.chroot
           echo "efibootmgr" >> live-build/config/package-lists/my.list.chroot
 
-          # Create a hook to update initramfs after installing the custom kernel
+          # Create a hook to install custom kernel and update initramfs
           cat << EOF > live-build/config/hooks/normal/0100-update-initramfs.hook.chroot
           #!/bin/sh
           set -e
           
-          # Install the custom kernel and initrd
-          dpkg -i /config/packages.chroot/linux-image-*.deb
+          # Install the custom kernel
+          dpkg -i /config/packages.chroot/linux-image-6.10.7_*.deb
           
           # Replace the default initrd with our custom one
-          KERNEL_VERSION=\$(ls /boot/vmlinuz-* | grep -oP '(?<=vmlinuz-).*' | sort -V | tail -n 1)
-          mv /config/packages.chroot/initrd.img-${KERNEL_VERSION}-custom /boot/initrd.img-\${KERNEL_VERSION}
+          cp /config/packages.chroot/initrd.img-6.10.7-custom /boot/initrd.img-6.10.7
           
           # Update GRUB to use the new kernel and initrd
           update-grub
