@@ -22,7 +22,7 @@ jobs:
       run: sudo lb clean
     
     - name: Configure live-build
-      run: lb config -d bookworm --debian-installer none --archive-areas "main contrib non-free" --debootstrap-options "--keyring=/usr/share/keyrings/debian-archive-keyring.gpg --variant=minbase"
+      run: lb config -d trixie --debian-installer none --archive-areas "main contrib non-free" --debootstrap-options "--keyring=/usr/share/keyrings/debian-archive-keyring.gpg --variant=minbase"
 
     - name: Build live image
       run: sudo lb build
