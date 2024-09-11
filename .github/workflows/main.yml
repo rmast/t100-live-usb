@@ -18,17 +18,13 @@ jobs:
         
         wget https://ftp.debian.org/debian/pool/main/l/live-build/live-build_20240810_all.deb
         sudo dpkg -i live-build_20240810_all.deb
-
     - name: Download and Compile Custom Kernel
       run: |
           KERNEL_VERSION=6.10.7
-
           wget https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-${KERNEL_VERSION}.tar.xz
           tar -xvf linux-${KERNEL_VERSION}.tar.xz
           cd linux-${KERNEL_VERSION}
-
           make defconfig
-
           sed -i 's/# CONFIG_IPU_BRIDGE is not set/CONFIG_IPU_BRIDGE=y/' .config
           sed -i 's/# CONFIG_VIDEO_INTEL_IPU6 is not set/CONFIG_VIDEO_INTEL_IPU6=y/' .config
           sed -i 's/# CONFIG_INTEL_VSC is not set/CONFIG_INTEL_VSC=y/' .config
@@ -39,7 +35,6 @@ jobs:
           sed -i 's/# CONFIG_VIDEO_ATOMISP_MSRLIST_HELPER is not set/CONFIG_VIDEO_ATOMISP_MSRLIST_HELPER=y/' .config
           sed -i 's/# CONFIG_VIDEO_ATOMISP_MT9M114 is not set/CONFIG_VIDEO_ATOMISP_MT9M114=y/' .config
           sed -i 's/# CONFIG_VIDEO_ATOMISP_GC0310 is not set/CONFIG_VIDEO_ATOMISP_GC0310=y/' .config
-
           echo "CONFIG_IPU_BRIDGE=y" >> .config
           echo "CONFIG_VIDEO_INTEL_IPU6=y" >> .config
           echo "CONFIG_INTEL_VSC=y" >> .config
@@ -50,30 +45,23 @@ jobs:
           echo "CONFIG_VIDEO_ATOMISP_MSRLIST_HELPER=y" >> .config
           echo "CONFIG_VIDEO_ATOMISP_MT9M114=y" >> .config
           echo "CONFIG_VIDEO_ATOMISP_GC0310=y" >> .config
-
           make -j$(nproc) bindeb-pkg
-
           # Move the kernel packages to a known location
           mkdir -p ../custom-kernel-debs
           mv ../*.deb ../custom-kernel-debs/
-
     - name: Create Custom Initrd
       run: |
           KERNEL_VERSION=6.10.7
           
           # Install necessary tools
           sudo apt-get install -y initramfs-tools
-
           # Create a temporary directory for initrd creation
           mkdir -p custom_initrd
           cd custom_initrd
-
           # Create the initrd
           sudo mkinitramfs -o ../initrd.img-${KERNEL_VERSION}-custom ${KERNEL_VERSION}-custom
-
           # Move back to the main directory
           cd ..
-
     - name: Clean up previous build
       run: sudo lb clean
 
@@ -82,16 +70,13 @@ jobs:
           mkdir -p live-build/config/packages.chroot
           mkdir -p live-build/config/package-lists
           mkdir -p live-build/config/hooks/normal
-
           # Copy custom kernel .deb files to live-build package directory
           cp custom-kernel-debs/*.deb live-build/config/packages.chroot/
-
           # Copy custom initrd to live-build package directory
           cp initrd.img-6.10.7-custom live-build/config/packages.chroot/
-
           echo "efivar" > live-build/config/package-lists/my.list.chroot
           echo "efibootmgr" >> live-build/config/package-lists/my.list.chroot
-
+          echo "grub-pc" >> live-build/config/package-lists/my.list.chroot
           # Create a hook to install custom kernel and update initramfs
           cat << EOF > live-build/config/hooks/normal/0100-update-initramfs.hook.chroot
           #!/bin/sh
@@ -106,9 +91,7 @@ jobs:
           # Update GRUB to use the new kernel and initrd
           update-grub
           EOF
-
           chmod +x live-build/config/hooks/normal/0100-update-initramfs.hook.chroot
-
           cd live-build    
     
           lb config -d bookworm --debian-installer none --archive-areas "main contrib non-free" \
@@ -118,7 +101,6 @@ jobs:
       run: |
           cd live-build
           sudo lb build
-
     - name: Upload Live ISO
       uses: actions/upload-artifact@v3
       with:
