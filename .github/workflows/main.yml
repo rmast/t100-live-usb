@@ -63,7 +63,7 @@ jobs:
           mkdir -p live-build/config/hooks/normal
 
           # Move custom kernel .deb files to live-build package directory
-          mv ../*.deb live-build/config/packages.chroot/
+          mv ./*.deb live-build/config/packages.chroot/
 
           echo "efivar" > live-build/config/package-lists/my.list.chroot
           echo "efibootmgr" >> live-build/config/package-lists/my.list.chroot
