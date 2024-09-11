@@ -123,22 +123,49 @@ jobs:
         lb config -d bookworm --debian-installer none --archive-areas "main contrib non-free" \
           --debootstrap-options "--keyring=/usr/share/keyrings/debian-archive-keyring.gpg --variant=minbase"
     
+    - name: Initialize live-build chroot
+      run: |
+        cd live-build
+        sudo lb bootstrap
+    
     - name: Prepare chroot environment
       run: |
-        sudo mount --bind /dev live-build/chroot/dev
-        sudo mount --bind /proc live-build/chroot/proc
-        sudo mount --bind /sys live-build/chroot/sys
+        if [ -d "live-build/chroot" ]; then
+          sudo mount --bind /dev live-build/chroot/dev
+          sudo mount --bind /proc live-build/chroot/proc
+          sudo mount --bind /sys live-build/chroot/sys
+        else
+          echo "Error: live-build/chroot directory does not exist"
+          exit 1
+        fi
+    
     - name: Build Debian Live ISO with Custom Kernel and Initrd
       run: |
-          cd live-build
-              sudo lb build
+        cd live-build
+        sudo lb build
+      continue-on-error: true
+    
     - name: Clean up chroot mounts
+      if: always()
       run: |
-        sudo umount live-build/chroot/sys
-        sudo umount live-build/chroot/proc
-        sudo umount live-build/chroot/dev
+        if [ -d "live-build/chroot" ]; then
+          sudo umount -f live-build/chroot/sys || true
+          sudo umount -f live-build/chroot/proc || true
+          sudo umount -f live-build/chroot/dev || true
+        fi
+    
+    - name: Check for ISO file
+      run: |
+        if [ -f live-build/*.iso ]; then
+          echo "ISO file created successfully"
+        else
+          echo "Error: ISO file not created"
+          exit 1
+        fi
+    
     - name: Upload Live ISO
+      if: success()
       uses: actions/upload-artifact@v3
       with:
-          name: debian-live-custom-kernel-initrd.iso
-          path: live-build/*.iso
+        name: debian-live-custom-kernel-initrd.iso
+        path: live-build/*.iso
