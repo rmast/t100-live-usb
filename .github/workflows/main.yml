@@ -1,4 +1,4 @@
-name: Build Live Image with Custom Kernel
+name: Build Live Image with Custom Kernel and Initrd
 
 on: [push]
 
@@ -53,10 +53,31 @@ jobs:
 
           make -j$(nproc) bindeb-pkg
 
+    - name: Create Custom Initrd
+      run: |
+          KERNEL_VERSION=6.10.7
+          
+          # Install necessary tools
+          sudo apt-get install -y initramfs-tools
+
+          # Create a temporary directory for initrd creation
+          mkdir -p custom_initrd
+          cd custom_initrd
+
+          # Create the initrd
+          sudo mkinitramfs -o ../initrd.img-${KERNEL_VERSION}-custom ${KERNEL_VERSION}-custom
+
+          # Move back to the main directory
+          cd ..
+
+          # Copy the custom initrd to the live-build packages directory
+          mkdir -p live-build/config/packages.chroot
+          cp initrd.img-${KERNEL_VERSION}-custom live-build/config/packages.chroot/
+
     - name: Clean up previous build
       run: sudo lb clean
 
-    - name: Configure live-build for Debian with Custom Kernel
+    - name: Configure live-build for Debian with Custom Kernel and Initrd
       run: |
           mkdir -p live-build/config/packages.chroot
           mkdir -p live-build/config/package-lists
@@ -72,7 +93,16 @@ jobs:
           cat << EOF > live-build/config/hooks/normal/0100-update-initramfs.hook.chroot
           #!/bin/sh
           set -e
-          update-initramfs -u -k all
+          
+          # Install the custom kernel and initrd
+          dpkg -i /config/packages.chroot/linux-image-*.deb
+          
+          # Replace the default initrd with our custom one
+          KERNEL_VERSION=\$(ls /boot/vmlinuz-* | grep -oP '(?<=vmlinuz-).*' | sort -V | tail -n 1)
+          mv /config/packages.chroot/initrd.img-${KERNEL_VERSION}-custom /boot/initrd.img-\${KERNEL_VERSION}
+          
+          # Update GRUB to use the new kernel and initrd
+          update-grub
           EOF
 
           chmod +x live-build/config/hooks/normal/0100-update-initramfs.hook.chroot
@@ -82,7 +112,7 @@ jobs:
           lb config -d bookworm --debian-installer none --archive-areas "main contrib non-free" \
             --debootstrap-options "--keyring=/usr/share/keyrings/debian-archive-keyring.gpg --variant=minbase"
 
-    - name: Build Debian Live ISO with Custom Kernel
+    - name: Build Debian Live ISO with Custom Kernel and Initrd
       run: |
           cd live-build
           sudo lb build
@@ -90,5 +120,5 @@ jobs:
     - name: Upload Live ISO
       uses: actions/upload-artifact@v3
       with:
-          name: debian-live-custom-kernel.iso
+          name: debian-live-custom-kernel-initrd.iso
           path: live-build/*.iso
