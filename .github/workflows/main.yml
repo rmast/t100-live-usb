@@ -12,10 +12,62 @@ jobs:
 
     - name: Install dependencies
       run: |
-        sudo apt-get update
-        sudo apt-get install -y wget live-build
+        sudo apt-get install -y wget
+        sudo apt-get install -y build-essential fakeroot libncurses5-dev libssl-dev ccache bison flex libelf-dev libudev-dev libpci-dev libiberty-dev debhelper dpkg-dev debootstrap gpg debian-archive-keyring
         
-    # Previous steps for kernel compilation and initrd creation remain the same
+        wget https://ftp.debian.org/debian/pool/main/l/live-build/live-build_20240810_all.deb
+        sudo dpkg -i live-build_20240810_all.deb
+    - name: Download and Compile Custom Kernel
+      run: |
+          KERNEL_VERSION=6.10.7
+          wget https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-${KERNEL_VERSION}.tar.xz
+          tar -xvf linux-${KERNEL_VERSION}.tar.xz
+          cd linux-${KERNEL_VERSION}
+          make defconfig
+          sed -i 's/# CONFIG_IPU_BRIDGE is not set/CONFIG_IPU_BRIDGE=y/' .config
+          sed -i 's/# CONFIG_VIDEO_INTEL_IPU6 is not set/CONFIG_VIDEO_INTEL_IPU6=y/' .config
+          sed -i 's/# CONFIG_INTEL_VSC is not set/CONFIG_INTEL_VSC=y/' .config
+          sed -i 's/# CONFIG_VIDEO_IPU3_CIO2 is not set/CONFIG_VIDEO_IPU3_CIO2=y/' .config
+          sed -i 's/# CONFIG_VIDEO_ATOMISP is not set/CONFIG_VIDEO_ATOMISP=y/' .config
+          sed -i 's/# CONFIG_VIDEO_ATOMISP_OV2722 is not set/CONFIG_VIDEO_ATOMISP_OV2722=y/' .config
+          sed -i 's/# CONFIG_VIDEO_ATOMISP_GC2235 is not set/CONFIG_VIDEO_ATOMISP_GC2235=y/' .config
+          sed -i 's/# CONFIG_VIDEO_ATOMISP_MSRLIST_HELPER is not set/CONFIG_VIDEO_ATOMISP_MSRLIST_HELPER=y/' .config
+          sed -i 's/# CONFIG_VIDEO_ATOMISP_MT9M114 is not set/CONFIG_VIDEO_ATOMISP_MT9M114=y/' .config
+          sed -i 's/# CONFIG_VIDEO_ATOMISP_GC0310 is not set/CONFIG_VIDEO_ATOMISP_GC0310=y/' .config
+          echo "CONFIG_IPU_BRIDGE=y" >> .config
+          echo "CONFIG_VIDEO_INTEL_IPU6=y" >> .config
+          echo "CONFIG_INTEL_VSC=y" >> .config
+          echo "CONFIG_VIDEO_IPU3_CIO2=y" >> .config
+          echo "CONFIG_VIDEO_ATOMISP=y" >> .config
+          echo "CONFIG_VIDEO_ATOMISP_OV2722=y" >> .config
+          echo "CONFIG_VIDEO_ATOMISP_GC2235=y" >> .config
+          echo "CONFIG_VIDEO_ATOMISP_MSRLIST_HELPER=y" >> .config
+          echo "CONFIG_VIDEO_ATOMISP_MT9M114=y" >> .config
+          echo "CONFIG_VIDEO_ATOMISP_GC0310=y" >> .config
+          make -j$(nproc) bindeb-pkg
+          # Move the kernel packages to a known location
+          mkdir -p ../custom-kernel-debs
+          mv ../*.deb ../custom-kernel-debs/
+          ls -al ../custom-kernel-debs/
+    - name: Create Custom Initrd
+      run: |
+          KERNEL_VERSION=6.10.7
+          
+          # Install necessary tools
+          sudo apt-get install -y initramfs-tools
+          
+          # Create a temporary directory for initrd creation
+          mkdir -p custom_initrd
+          cd custom_initrd
+          
+          # Install the custom kernel modules
+          sudo dpkg -i ../custom-kernel-debs/linux-image-${KERNEL_VERSION}_*.deb
+          
+          # Create the initrd with the custom kernel modules
+          sudo mkinitramfs -o ../initrd.img-${KERNEL_VERSION}-custom ${KERNEL_VERSION}-custom
+          
+          # Move back to the main directory
+          cd ..
 
     - name: Configure live-build for Debian with Custom Kernel and Initrd
       run: |
