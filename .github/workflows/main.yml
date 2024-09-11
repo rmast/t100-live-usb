@@ -7,6 +7,9 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+    - name: Clean up previous build
+      run: sudo lb clean
+    
     - name: Checkout code
       uses: actions/checkout@v2
 
