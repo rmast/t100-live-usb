@@ -18,6 +18,7 @@ jobs:
         
         wget https://ftp.debian.org/debian/pool/main/l/live-build/live-build_20240810_all.deb
         sudo dpkg -i live-build_20240810_all.deb
+
     - name: Download and Compile Custom Kernel
       run: |
           KERNEL_VERSION=6.10.7
@@ -50,17 +51,24 @@ jobs:
           mkdir -p ../custom-kernel-debs
           mv ../*.deb ../custom-kernel-debs/
           ls -al ../custom-kernel-debs/
+
     - name: Create Custom Initrd
       run: |
           KERNEL_VERSION=6.10.7
           
           # Install necessary tools
           sudo apt-get install -y initramfs-tools
+          
           # Create a temporary directory for initrd creation
           mkdir -p custom_initrd
           cd custom_initrd
-          # Create the initrd
+          
+          # Install the custom kernel modules
+          sudo dpkg -i ../custom-kernel-debs/linux-image-${KERNEL_VERSION}_*.deb
+          
+          # Create the initrd with the custom kernel modules
           sudo mkinitramfs -o ../initrd.img-${KERNEL_VERSION}-custom ${KERNEL_VERSION}-custom
+          
           # Move back to the main directory
           cd ..
 
@@ -70,8 +78,6 @@ jobs:
           mkdir -p live-build/config/package-lists
           mkdir -p live-build/config/hooks/normal
           # Copy custom kernel .deb files to live-build package directory
-          echo "inhoud van custom-kernel-debs map"
-          ls -al custom-kernel-debs/
           cp custom-kernel-debs/*.deb live-build/config/packages.chroot/
           # Copy custom initrd to live-build package directory
           cp initrd.img-6.10.7-custom live-build/config/packages.chroot/
@@ -79,15 +85,11 @@ jobs:
           echo "efibootmgr" >> live-build/config/package-lists/my.list.chroot
           echo "grub-pc" >> live-build/config/package-lists/my.list.chroot
           # Create a hook to install custom kernel and update initramfs
-          set -x
           cat << EOF > live-build/config/hooks/normal/0100-update-initramfs.hook.chroot
           #!/bin/sh
           set -e
-          set -x
           
           # Install the custom kernel
-          echo "inhoud van chroot /"
-          ls -lR /
           dpkg -i /config/packages.chroot/linux-image-6.10.7_*.deb
           
           # Replace the default initrd with our custom one
@@ -106,6 +108,7 @@ jobs:
       run: |
           cd live-build
           sudo lb build
+
     - name: Upload Live ISO
       uses: actions/upload-artifact@v3
       with:
