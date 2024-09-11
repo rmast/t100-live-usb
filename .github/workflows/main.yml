@@ -77,8 +77,6 @@ jobs:
           echo "efivar" > live-build/config/package-lists/my.list.chroot
           echo "efibootmgr" >> live-build/config/package-lists/my.list.chroot
           echo "grub-pc" >> live-build/config/package-lists/my.list.chroot
-          echo "firmware-misc-nonfree" >> live-build/config/package-lists/my.list.chroot
-          echo "firmware-realtek" >> live-build/config/package-lists/my.list.chroot
           # Create a hook to install custom kernel and update initramfs
           set -x
           cat << EOF > live-build/config/hooks/normal/0100-update-initramfs.hook.chroot
