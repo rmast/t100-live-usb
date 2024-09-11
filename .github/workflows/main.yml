@@ -1,4 +1,4 @@
-name: Build Live Image
+name: Build Live Image with Custom Kernel
 
 on: [push]
 
@@ -19,22 +19,16 @@ jobs:
         wget https://ftp.debian.org/debian/pool/main/l/live-build/live-build_20240810_all.deb
         sudo dpkg -i live-build_20240810_all.deb
 
-    # Download and compile the custom kernel
     - name: Download and Compile Custom Kernel
       run: |
-          # Define the kernel version
           KERNEL_VERSION=6.10.7
 
-          # Download the kernel source
           wget https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-${KERNEL_VERSION}.tar.xz
           tar -xvf linux-${KERNEL_VERSION}.tar.xz
           cd linux-${KERNEL_VERSION}
 
-          # Generate default config
           make defconfig
 
-          # Automatically modify the .config file to set the required parameters
-          # Enable and set the following kernel options
           sed -i 's/# CONFIG_IPU_BRIDGE is not set/CONFIG_IPU_BRIDGE=y/' .config
           sed -i 's/# CONFIG_VIDEO_INTEL_IPU6 is not set/CONFIG_VIDEO_INTEL_IPU6=y/' .config
           sed -i 's/# CONFIG_INTEL_VSC is not set/CONFIG_INTEL_VSC=y/' .config
@@ -46,7 +40,6 @@ jobs:
           sed -i 's/# CONFIG_VIDEO_ATOMISP_MT9M114 is not set/CONFIG_VIDEO_ATOMISP_MT9M114=y/' .config
           sed -i 's/# CONFIG_VIDEO_ATOMISP_GC0310 is not set/CONFIG_VIDEO_ATOMISP_GC0310=y/' .config
 
-          # Alternatively, append to the config if they aren't present at all
           echo "CONFIG_IPU_BRIDGE=y" >> .config
           echo "CONFIG_VIDEO_INTEL_IPU6=y" >> .config
           echo "CONFIG_INTEL_VSC=y" >> .config
@@ -58,45 +51,44 @@ jobs:
           echo "CONFIG_VIDEO_ATOMISP_MT9M114=y" >> .config
           echo "CONFIG_VIDEO_ATOMISP_GC0310=y" >> .config
 
-          # Compile the kernel and build .deb packages
-          make -j$(nproc) bindeb-pkg        
-      # Store the generated .deb files as artifacts
-    - name: Upload Kernel .deb Files
-      uses: actions/upload-artifact@v3
-      with:
-          name: kernel-debs
-          path: ./*.deb
+          make -j$(nproc) bindeb-pkg
+
     - name: Clean up previous build
       run: sudo lb clean
 
-      # Setup live-build configuration and include the custom kernel and extra packages
-    - name: Configure live-build for Debian
+    - name: Configure live-build for Debian with Custom Kernel
       run: |
-          # Create directories for live-build configuration
           mkdir -p live-build/config/packages.chroot
           mkdir -p live-build/config/package-lists
+          mkdir -p live-build/config/hooks/normal
 
           # Move custom kernel .deb files to live-build package directory
-          mv ./*.deb live-build/config/packages.chroot/
+          mv ../*.deb live-build/config/packages.chroot/
 
-          # Include additional packages (add more packages as needed)
           echo "efivar" > live-build/config/package-lists/my.list.chroot
           echo "efibootmgr" >> live-build/config/package-lists/my.list.chroot
 
-          # Configure live-build
+          # Create a hook to update initramfs after installing the custom kernel
+          cat << EOF > live-build/config/hooks/normal/0100-update-initramfs.hook.chroot
+          #!/bin/sh
+          set -e
+          update-initramfs -u -k all
+          EOF
+
+          chmod +x live-build/config/hooks/normal/0100-update-initramfs.hook.chroot
+
           cd live-build    
     
-          lb config -d trixie --debian-installer none --archive-areas "main contrib non-free" \
+          lb config -d bookworm --debian-installer none --archive-areas "main contrib non-free" \
             --debootstrap-options "--keyring=/usr/share/keyrings/debian-archive-keyring.gpg --variant=minbase"
 
-    # Build the live image
-    - name: Build Debian Live ISO
+    - name: Build Debian Live ISO with Custom Kernel
       run: |
           cd live-build
           sudo lb build
-      # Upload the live image ISO as an artifact
+
     - name: Upload Live ISO
       uses: actions/upload-artifact@v3
       with:
-          name: debian-live-custom.iso
+          name: debian-live-custom-kernel.iso
           path: live-build/*.iso
