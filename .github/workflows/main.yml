@@ -75,7 +75,7 @@ jobs:
         cd live-build
         
         # Initialize live-build configuration
-        sudo lb config --distribution bookworm --archive-areas "main contrib non-free" --debian-installer none
+        lb config --distribution bookworm --archive-areas "main contrib non-free" --debian-installer none
         
         # Create necessary directories
         mkdir -p config/packages.chroot config/package-lists config/hooks/normal config/includes.chroot/etc/default
