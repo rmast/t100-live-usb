@@ -94,6 +94,7 @@ jobs:
         grub-efi-amd64
         linux-image-amd64
         linux-firmware
+        firmware-linux
         EOF
         
         # Create GRUB default configuration
