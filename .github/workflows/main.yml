@@ -90,7 +90,6 @@ jobs:
         cat << EOF > config/package-lists/my.list.chroot
         efivar
         efibootmgr
-        grub-pc
         grub-efi-amd64
         linux-image-amd64
         EOF
@@ -98,7 +97,7 @@ jobs:
         # Create GRUB default configuration
         echo 'GRUB_TIMEOUT=5' > config/includes.chroot/etc/default/grub
         
-        # Create a hook to install custom kernel and update initramfs
+        # Create a hook to install custom kernel, update initramfs, and install grub-pc
         cat << EOF > config/hooks/normal/0100-update-initramfs.hook.chroot
         #!/bin/sh
         set -e
@@ -112,6 +111,9 @@ jobs:
         
         # Update initramfs for the new kernel
         update-initramfs -c -k 6.10.7
+        
+        # Install grub-pc after initial setup
+        apt-get install -y grub-pc
         
         # Update GRUB configuration
         update-grub
