@@ -134,7 +134,6 @@ jobs:
     - name: Display build logs
       if: always()
       run: |
-        cd live-build
         if [ -f .build/logs/binary ]; then
           echo "Binary build log:"
           cat .build/logs/binary
