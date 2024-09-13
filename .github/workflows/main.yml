@@ -18,6 +18,14 @@ jobs:
         
         wget https://ftp.debian.org/debian/pool/main/l/live-build/live-build_20240810_all.deb
         sudo dpkg -i live-build_20240810_all.deb
+        #!/bin/bash -x
+        # Patch for Debian bug 1032408 (see bugs.debian.org)
+        sudo patch -p1 -N -d /usr/lib/live/build <patches/binary_rootfs.patch
+        # Patches for Debian bug 1043133 (see bugs.debian.org)
+        sudo patch -p1 -N -d /usr/lib/live/build <patches/chroot_firmware.patch
+        sudo patch -p1 -N -d /usr/lib/live/build <patches/installer_debian-installer.patch
+
+        
     - name: Download and Compile Custom Kernel
       run: |
           KERNEL_VERSION=6.10.7
