@@ -20,8 +20,8 @@ jobs:
         sudo dpkg -i live-build_20240810_all.deb
         #!/bin/bash -x
         # Patch for Debian bug 1059227 (see bugs.debian.org)
-        ls -al /usr/lib/live*
-        ls -al /lib/live*
+        ls -al /usr/lib/live/build
+        ls -al /lib/live/build
         sudo patch -p1 -N -d /lib/live/build <patches/firmwarelists.sh
       
     - name: Download and Compile Custom Kernel
