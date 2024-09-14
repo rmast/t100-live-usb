@@ -117,6 +117,11 @@ jobs:
         #!/bin/sh
         set -e
         
+        # Ensure /dev, /proc, and /sys are mounted
+        mount -t devtmpfs devtmpfs /dev || true
+        mount -t proc proc /proc || true
+        mount -t sysfs sysfs /sys || true
+        
         # Install linux-firmware package to address missing firmware warnings
         apt-get update
         # Install the custom kernel
@@ -126,10 +131,15 @@ jobs:
         update-initramfs -c -k 6.10.7
         
         # Install grub-pc after initial setup
-        apt-get install -y grub-pc
+        DEBIAN_FRONTEND=noninteractive apt-get install -y grub-pc
         
         # Update GRUB configuration
         update-grub
+        
+        # Unmount the filesystems
+        umount /sys || true
+        umount /proc || true
+        umount /dev || true
         EOF
         
         chmod +x config/hooks/normal/0100-update-initramfs.hook.chroot
