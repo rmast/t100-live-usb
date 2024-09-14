@@ -131,7 +131,7 @@ jobs:
         
         # Install linux-firmware package to address missing firmware warnings
         apt-get update
-        apt-get install -y linux-firmware
+        apt-get install -y firmware-linux-nonfree firmware-nonfree firmware-linux-free amd64-microcode intel-microcode
         
         # Install the custom kernel
         dpkg -i /root/packages/linux-image-6.10.7_*.deb
