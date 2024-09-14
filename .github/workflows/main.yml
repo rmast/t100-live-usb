@@ -24,6 +24,9 @@ jobs:
         # Patches for Debian bug 1043133 (see bugs.debian.org)
         sudo patch -p1 -N -d /usr/lib/live/build <patches/chroot_firmware.patch
         sudo patch -p1 -N -d /usr/lib/live/build <patches/installer_debian-installer.patch
+        # Patch to display boot menu for 10 seconds before booting
+        sudo patch -p1 -N -d /usr/share/live/build/bootloaders/isolinux <patches/isolinux.cfg.patch
+
       
     - name: Download and Compile Custom Kernel
       run: |
