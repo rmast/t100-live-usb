@@ -119,9 +119,8 @@ jobs:
         
         # Install linux-firmware package to address missing firmware warnings
         apt-get update
-        ls -lR /
         # Install the custom kernel
-        dpkg -i /config/packages.chroot/linux-image-6.10.7_*.deb
+        dpkg -i /root/packages/linux-image-6.10.7_*.deb
         
         # Update initramfs for the new kernel
         update-initramfs -c -k 6.10.7
