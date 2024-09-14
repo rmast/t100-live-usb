@@ -119,7 +119,7 @@ jobs:
         
         # Install linux-firmware package to address missing firmware warnings
         apt-get update
-        ls -lR /config
+        ls -lR /
         # Install the custom kernel
         dpkg -i /config/packages.chroot/linux-image-6.10.7_*.deb
         
