@@ -26,7 +26,6 @@ jobs:
         # Patch to display boot menu for 10 seconds before booting
         sudo patch -p1 -N -d /usr/share/live/build/bootloaders/isolinux <patches/isolinux.cfg.patch
 
-      
     - name: Download and Compile Custom Kernel
       run: |
           KERNEL_VERSION=6.10.7
@@ -54,11 +53,16 @@ jobs:
           echo "CONFIG_VIDEO_ATOMISP_MSRLIST_HELPER=y" >> .config
           echo "CONFIG_VIDEO_ATOMISP_MT9M114=y" >> .config
           echo "CONFIG_VIDEO_ATOMISP_GC0310=y" >> .config
+          # Enable all modules
+          make oldconfig
+          sed -i 's/=m$/=y/' .config
+          # Build kernel and modules
           make -j$(nproc) bindeb-pkg
           # Move the kernel packages to a known location
           mkdir -p ../custom-kernel-debs
           mv ../*.deb ../custom-kernel-debs/
           ls -al ../custom-kernel-debs/
+
     - name: Create Custom Initrd
       run: |
           KERNEL_VERSION=6.10.7
@@ -73,7 +77,10 @@ jobs:
           # Install the custom kernel modules
           sudo dpkg -i ../custom-kernel-debs/linux-image-${KERNEL_VERSION}_*.deb
           
-          # Create the initrd with the custom kernel modules
+          # Copy firmware files
+          sudo cp -R /lib/firmware /lib/firmware-custom
+          
+          # Create the initrd with the custom kernel modules and firmware
           sudo mkinitramfs -o ../initrd.img-${KERNEL_VERSION}-custom ${KERNEL_VERSION}-custom
           
           # Move back to the main directory
@@ -85,10 +92,10 @@ jobs:
         cd live-build
         
         # Initialize live-build configuration
-        lb config --distribution bookworm --archive-areas "main contrib non-free non-free-firmware" --debian-installer none --firmware-chroot false
+        lb config --distribution bookworm --archive-areas "main contrib non-free non-free-firmware" --debian-installer none --firmware-chroot true
         
         # Create necessary directories
-        mkdir -p config/packages.chroot config/package-lists config/hooks/normal config/includes.chroot/etc/default
+        mkdir -p config/packages.chroot config/package-lists config/hooks/normal config/includes.chroot/etc/default config/includes.chroot/lib
 
         # Copy custom kernel .deb files to live-build package directory
         cp ../custom-kernel-debs/*.deb config/packages.chroot/
@@ -96,12 +103,17 @@ jobs:
         # Copy custom initrd to live-build package directory
         cp ../initrd.img-6.10.7-custom config/packages.chroot/
         
+        # Copy firmware files
+        cp -R /lib/firmware-custom config/includes.chroot/lib/firmware
+        
         # Create package list
         cat << EOF > config/package-lists/my.list.chroot
         efivar
         efibootmgr
         grub-efi-amd64
         linux-image-amd64
+        firmware-linux
+        firmware-linux-nonfree
         EOF
         
         # Create GRUB default configuration
@@ -119,6 +131,8 @@ jobs:
         
         # Install linux-firmware package to address missing firmware warnings
         apt-get update
+        apt-get install -y linux-firmware
+        
         # Install the custom kernel
         dpkg -i /root/packages/linux-image-6.10.7_*.deb
         
