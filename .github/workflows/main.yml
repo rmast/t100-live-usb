@@ -105,6 +105,10 @@ jobs:
         linux-image-amd64
         linux-firmware
         firmware-linux
+        firmware-linux-free
+        firmware-ath9k-htc
+        hdmi2usb-fx2-firmware
+        atmel-firmware
         EOF
         
         # Create GRUB default configuration
