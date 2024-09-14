@@ -119,7 +119,7 @@ jobs:
         
         # Install linux-firmware package to address missing firmware warnings
         apt-get update
-                
+        ls -lR /config
         # Install the custom kernel
         dpkg -i /config/packages.chroot/linux-image-6.10.7_*.deb
         
@@ -146,6 +146,7 @@ jobs:
     - name: Display build logs
       if: always()
       run: |
+        cd live-build
         if [ -f .build/logs/binary ]; then
           echo "Binary build log:"
           cat .build/logs/binary
