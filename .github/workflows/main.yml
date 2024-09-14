@@ -17,12 +17,13 @@ jobs:
         sudo apt-get install -y build-essential fakeroot libncurses5-dev libssl-dev ccache bison flex libelf-dev libudev-dev libpci-dev libiberty-dev debhelper dpkg-dev debootstrap gpg debian-archive-keyring
         
         wget https://ftp.debian.org/debian/pool/main/l/live-build/live-build_20240810_all.deb
-        sudo dpkg -i live-build_20240810_all.deb
+        sudo dpkg -i live-build_20230502_all.deb
         #!/bin/bash -x
-        # Patch for Debian bug 1059227 (see bugs.debian.org)
-        ls -al /usr/lib/live
-        ls -al /lib/live
-        sudo patch -p1 -N -d /lib/live/build <patches/firmwarelists.sh
+        # Patch for Debian bug 1032408 (see bugs.debian.org)
+        sudo patch -p1 -N -d /usr/lib/live/build <patches/binary_rootfs.patch
+        # Patches for Debian bug 1043133 (see bugs.debian.org)
+        sudo patch -p1 -N -d /usr/lib/live/build <patches/chroot_firmware.patch
+        sudo patch -p1 -N -d /usr/lib/live/build <patches/installer_debian-installer.patch
       
     - name: Download and Compile Custom Kernel
       run: |
