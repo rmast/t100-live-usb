@@ -15,7 +15,7 @@ jobs:
         sudo apt-get update
         sudo apt-get install -y wget
         sudo apt-get install -y build-essential fakeroot libncurses5-dev libssl-dev ccache bison flex libelf-dev libudev-dev libpci-dev libiberty-dev debhelper dpkg-dev debootstrap gpg debian-archive-keyring
-        sudo apt-get install linux-firmware firmware-misc-nonfree firmware-realtek
+        sudo apt-get install linux-firmware firmware-nonfree
         wget https://ftp.debian.org/debian/pool/main/l/live-build/live-build_20230502_all.deb
         sudo dpkg -i live-build_20230502_all.deb
         #!/bin/bash -x
@@ -104,8 +104,7 @@ jobs:
         grub-efi-amd64
         linux-image-amd64
         linux-firmware
-        firmware-misc-nonfree
-        firmware-realtek
+        firmware-nonfree
         EOF
         
         # Create GRUB default configuration
