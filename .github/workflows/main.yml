@@ -103,8 +103,6 @@ jobs:
         efibootmgr
         grub-efi-amd64
         linux-image-amd64
-        linux-firmware
-        firmware-linux
         firmware-linux-free
         firmware-ath9k-htc
         hdmi2usb-fx2-firmware
