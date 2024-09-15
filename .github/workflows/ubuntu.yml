@@ -14,18 +14,18 @@ jobs:
     - name: Install dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y wget live-build syslinux-common pxelinux
+        sudo apt-get install -y wgetsyslinux-common pxelinux
         sudo apt-get install -y build-essential fakeroot libncurses5-dev libssl-dev ccache bison flex libelf-dev libudev-dev libpci-dev libiberty-dev debhelper dpkg-dev debootstrap gpg debian-archive-keyring
         wget https://ftp.debian.org/debian/pool/main/l/live-build/live-build_20230502_all.deb
-#        sudo dpkg -i live-build_20230502_all.deb
+        sudo dpkg -i live-build_20230502_all.deb
         #!/bin/bash -x
         # Patch for Debian bug 1032408 (see bugs.debian.org)
-#        sudo patch -p1 -N -d /usr/lib/live/build <patches/binary_rootfs.patch
+        sudo patch -p1 -N -d /usr/lib/live/build <patches/binary_rootfs.patch
         # Patches for Debian bug 1043133 (see bugs.debian.org)
-#        sudo patch -p1 -N -d /usr/lib/live/build <patches/chroot_firmware.patch
-#        sudo patch -p1 -N -d /usr/lib/live/build <patches/installer_debian-installer.patch
+        sudo patch -p1 -N -d /usr/lib/live/build <patches/chroot_firmware.patch
+        sudo patch -p1 -N -d /usr/lib/live/build <patches/installer_debian-installer.patch
         # Patch to display boot menu for 10 seconds before booting
-#        sudo patch -p1 -N -d /usr/share/live/build/bootloaders/isolinux <patches/isolinux.cfg.patch
+        sudo patch -p1 -N -d /usr/share/live/build/bootloaders/isolinux <patches/isolinux.cfg.patch
     - name: Configure live-build for Debian with Custom Kernel and Initrd
       run: |
         mkdir -p live-build
@@ -48,6 +48,34 @@ jobs:
         
         # Create GRUB default configuration
         echo 'GRUB_TIMEOUT=5' > config/includes.chroot/etc/default/grub
+        
+        # Create a hook to install custom kernel, update initramfs, and install grub-pc
+        cat << EOF > config/hooks/normal/0100-update-initramfs.hook.chroot
+        #!/bin/sh
+        set -e
+        
+        # Ensure /dev, /proc, and /sys are mounted
+        mount -t devtmpfs devtmpfs /dev || true
+        mount -t proc proc /proc || true
+        mount -t sysfs sysfs /sys || true
+        
+        # Install linux-firmware package to address missing firmware warnings
+        apt-get update
+        apt-get install -y syslinux
+        
+        # Install grub-pc after initial setup
+        DEBIAN_FRONTEND=noninteractive apt-get install -y grub-pc
+        
+        # Update GRUB configuration
+        update-grub
+        
+        # Unmount the filesystems
+        umount /sys || true
+        umount /proc || true
+        umount /dev || true
+        EOF
+        
+        chmod +x config/hooks/normal/0100-update-initramfs.hook.chroot
         
     - name: Build Debian Live ISO
       run: |
