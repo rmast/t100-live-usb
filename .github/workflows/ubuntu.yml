@@ -45,6 +45,9 @@ jobs:
           --mirror-binary "http://archive.ubuntu.com/ubuntu/" \
           --mirror-binary-security "http://security.ubuntu.com/ubuntu/" \
           --mirror-debian-installer "http://archive.ubuntu.com/ubuntu/" \
+          --parent-mirror-chroot-security "http://security.ubuntu.com/ubuntu/" \
+          --parent-mirror-binary-security "http://security.ubuntu.com/ubuntu/" \
+          --mirror-chroot-security "http://security.ubuntu.com/ubuntu/" \
           --apt-recommends false
         
         # Create necessary directories
