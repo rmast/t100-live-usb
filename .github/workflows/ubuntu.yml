@@ -14,9 +14,10 @@ jobs:
     - name: Install dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y wget syslinux-common pxelinux live-build
+        sudo apt-get install -y wget syslinux-common pxelinux
         sudo apt-get install -y build-essential fakeroot libncurses5-dev libssl-dev ccache bison flex libelf-dev libudev-dev libpci-dev libiberty-dev debhelper dpkg-dev debootstrap gpg ubuntu-keyring
-
+        wget https://ftp.debian.org/debian/pool/main/l/live-build/live-build_20240810_all.deb
+        sudo dpkg -i live-build_20240810_all.deb
     - name: Configure live-build for Ubuntu Noble
       run: |
         mkdir -p live-build
