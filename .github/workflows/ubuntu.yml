@@ -55,12 +55,12 @@ jobs:
         
         # Create package list
         cat << EOF > config/package-lists/my.list.chroot
-        efivar
-        efibootmgr
-        grub-efi-amd64
-        pxelinux
-        syslinux-common
-        linux-image-generic
+        #efivar
+        #efibootmgr
+        #grub-efi-amd64
+        #pxelinux
+        #syslinux-common
+        #linux-image-generic
         EOF
         
         # Create GRUB default configuration
@@ -78,7 +78,7 @@ jobs:
         
         # Install linux-firmware package to address missing firmware warnings
         apt-get update
-        apt-get install -y syslinux syslinux-common pxelinux linux-image-generic
+        #apt-get install -y syslinux syslinux-common pxelinux linux-image-generic
         
         # Install grub-pc after initial setup
         DEBIAN_FRONTEND=noninteractive apt-get install -y grub-pc
