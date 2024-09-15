@@ -58,6 +58,8 @@ jobs:
       # Package the kernel
       - name: Package Kernel
         run: |
+          # Ensure KERNEL_VERSION is set
+          KERNEL_VERSION=6.10.7
           cd linux-${KERNEL_VERSION}
           # Create a temporary directory for packaging
           mkdir -p ../kernel-package/DEBIAN
