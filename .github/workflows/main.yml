@@ -1,4 +1,4 @@
-name: Build Live Image with Custom Kernel and Initrd
+name: Build Jammy Live Image
 
 on:
   workflow_dispatch:
@@ -13,50 +13,23 @@ jobs:
 
     - name: Install dependencies
       run: |
-        sudo apt-get update
-        sudo apt-get install -y wget live-build
-        sudo apt-get install -y build-essential fakeroot libncurses5-dev libssl-dev ccache bison flex libelf-dev libudev-dev libpci-dev libiberty-dev debhelper dpkg-dev debootstrap gpg debian-archive-keyring
-
-        #!/bin/bash -x
-        # Patch to display boot menu for 10 seconds before booting
-        sudo patch -p1 -N -d /usr/share/live/build/bootloaders/isolinux <patches/isolinux.cfg.patch
+        sudo apt-get -y install vim live-build fdisk
 
     - name: Configure live-build for Debian with Custom Kernel and Initrd
       run: |
-        mkdir -p live-build
-        cd live-build
-        
-        # Initialize live-build configuration
-        lb config --distribution jammy --archive-areas "main contrib non-free non-free-firmware" --debian-installer live --firmware-chroot false
-
-        # Create necessary directories
-        mkdir -p config/packages.chroot config/package-lists config/hooks/normal config/includes.chroot/etc/default config/includes.chroot/lib
-
-        # Create package list
-        cat << EOF > config/package-lists/my.list.chroot
-        efivar
-        efibootmgr
-        grub-efi-amd64
-        EOF
-        
-        # Create GRUB default configuration
-        echo 'GRUB_TIMEOUT=5' > config/includes.chroot/etc/default/grub
+        lb config --distribution jammy --debian-installer live --binary-images netboot --debconf-frontend noninteractive --chroot-filesystem squashfs --archive-areas "main restricted universe multiverse" --apt-options "--yes" --bootappend-live "keyboard-layouts=no" --mode ubuntu --firmware-chroot false
 
     - name: Build Debian Live ISO
       run: |
-        cd live-build
-        sudo lb clean
-        sudo lb config
-        sudo lb build
-#      continue-on-error: true
+        lb build
 
     - name: Check for ISO file
       run: |
-        if [ -f live-build/live-image-amd64.hybrid.iso ]; then
+        if [ -f live-image-amd64.hybrid.iso ]; then
           echo "ISO file created successfully"
         else
           echo "Error: ISO file not created"
-          ls -R live-build
+          ls -R
           exit 1
         fi
 
@@ -65,11 +38,10 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: debian-live-custom-kernel-initrd.iso
-        path: live-build/live-image-amd64.hybrid.iso
+        path: live-image-amd64.hybrid.iso
 
     - name: Clean up
       if: always()
       run: |
-        cd live-build
-        sudo lb clean
-        sudo rm -rf chroot
+         lb clean
+         rm -rf chroot
