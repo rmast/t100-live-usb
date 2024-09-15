@@ -14,18 +14,18 @@ jobs:
     - name: Install dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y wget syslinux-common pxelinux
+        sudo apt-get install -y wget syslinux-common pxelinux live-build
         sudo apt-get install -y build-essential fakeroot libncurses5-dev libssl-dev ccache bison flex libelf-dev libudev-dev libpci-dev libiberty-dev debhelper dpkg-dev debootstrap gpg ubuntu-keyring
-        wget https://ftp.debian.org/debian/pool/main/l/live-build/live-build_20230502_all.deb
-        sudo dpkg -i live-build_20230502_all.deb
+        #wget https://ftp.debian.org/debian/pool/main/l/live-build/live-build_20230502_all.deb
+        #sudo dpkg -i live-build_20230502_all.deb
         #!/bin/bash -x
         # Patch for Debian bug 1032408 (see bugs.debian.org)
-        sudo patch -p1 -N -d /usr/lib/live/build <patches/binary_rootfs.patch
+        #sudo patch -p1 -N -d /usr/lib/live/build <patches/binary_rootfs.patch
         # Patches for Debian bug 1043133 (see bugs.debian.org)
-        sudo patch -p1 -N -d /usr/lib/live/build <patches/chroot_firmware.patch
-        sudo patch -p1 -N -d /usr/lib/live/build <patches/installer_debian-installer.patch
+        #sudo patch -p1 -N -d /usr/lib/live/build <patches/chroot_firmware.patch
+        #sudo patch -p1 -N -d /usr/lib/live/build <patches/installer_debian-installer.patch
         # Patch to display boot menu for 10 seconds before booting
-        sudo patch -p1 -N -d /usr/share/live/build/bootloaders/isolinux <patches/isolinux.cfg.patch
+        #sudo patch -p1 -N -d /usr/share/live/build/bootloaders/isolinux <patches/isolinux.cfg.patch
     - name: Configure live-build for Debian with Custom Kernel and Initrd
       run: |
         mkdir -p live-build
@@ -100,20 +100,7 @@ jobs:
         sudo lb clean
         sudo lb config
         sudo lb build
-      continue-on-error: true
 
-    - name: Display build logs
-      if: always()
-      run: |
-        cd live-build
-        if [ -f .build/logs/binary ]; then
-          echo "Binary build log:"
-          cat .build/logs/binary
-        fi
-        if [ -f .build/logs/chroot ]; then
-          echo "Chroot build log:"
-          cat .build/logs/chroot
-        fi
     - name: Check for ISO file
       run: |
         if [ -f live-build/live-image-amd64.hybrid.iso ]; then
