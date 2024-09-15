@@ -92,4 +92,3 @@ jobs:
         cd live-build
         sudo lb clean
         sudo rm -rf chroot
-Update main.yml · rmast/t100-live-usb@ddbae8e
