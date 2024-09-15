@@ -14,18 +14,8 @@ jobs:
     - name: Install dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y wget syslinux-common pxelinux
+        sudo apt-get install -y wget syslinux-common pxelinux live-build
         sudo apt-get install -y build-essential fakeroot libncurses5-dev libssl-dev ccache bison flex libelf-dev libudev-dev libpci-dev libiberty-dev debhelper dpkg-dev debootstrap gpg ubuntu-keyring
-        wget https://ftp.debian.org/debian/pool/main/l/live-build/live-build_20240810_all.deb
-        sudo dpkg -i live-build_20240810_all.deb
-        #!/bin/bash -x
-        # Patch for Debian bug 1032408 (see bugs.debian.org)
-        #sudo patch -p1 -N -d /usr/lib/live/build <patches/binary_rootfs.patch
-        # Patches for Debian bug 1043133 (see bugs.debian.org)
-        #sudo patch -p1 -N -d /usr/lib/live/build <patches/chroot_firmware.patch
-        #sudo patch -p1 -N -d /usr/lib/live/build <patches/installer_debian-installer.patch
-        # Patch to display boot menu for 10 seconds before booting
-        #sudo patch -p1 -N -d /usr/share/live/build/bootloaders/isolinux <patches/isolinux.cfg.patch
 
     - name: Configure live-build for Ubuntu Noble
       run: |
@@ -53,8 +43,7 @@ jobs:
 
         # Create package list
         cat << EOF > config/package-lists/my.list.chroot
-        linux-image-generic
-        linux-headers-generic
+        linux-generic
         grub-pc
         EOF
         
@@ -73,7 +62,7 @@ jobs:
         
         # Update and install packages
         apt-get update
-        DEBIAN_FRONTEND=noninteractive apt-get install -y linux-image-generic linux-headers-generic grub-pc
+        DEBIAN_FRONTEND=noninteractive apt-get install -y linux-generic grub-pc
         
         # Update initramfs for all installed kernels
         update-initramfs -u -k all
