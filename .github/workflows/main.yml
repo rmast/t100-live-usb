@@ -17,7 +17,7 @@ jobs:
 
     - name: Configure live-build for Debian with Custom Kernel and Initrd
       run: |
-        sudo lb config --distribution bookworm --debian-installer live --binary-images netboot --debconf-frontend noninteractive --chroot-filesystem squashfs --archive-areas "main restricted universe multiverse" --apt-options "--yes" --bootappend-live "keyboard-layouts=no" --mode debian  --firmware-chroot false
+        sudo lb config --distribution bookworm --debian-installer live --binary-images netboot --debconf-frontend noninteractive --chroot-filesystem squashfs --apt-options "--yes" --bootappend-live "keyboard-layouts=no" --mode debian  --firmware-chroot false
 
     - name: Build Debian Live ISO
       run: |
