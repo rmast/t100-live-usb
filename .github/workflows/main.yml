@@ -17,11 +17,11 @@ jobs:
 
     - name: Configure live-build for Debian with Custom Kernel and Initrd
       run: |
-        lb config --distribution jammy --debian-installer live --binary-images netboot --debconf-frontend noninteractive --chroot-filesystem squashfs --archive-areas "main restricted universe multiverse" --apt-options "--yes" --bootappend-live "keyboard-layouts=no" --mode ubuntu --firmware-chroot false
+        sudo lb config --distribution jammy --debian-installer live --binary-images netboot --debconf-frontend noninteractive --chroot-filesystem squashfs --archive-areas "main restricted universe multiverse" --apt-options "--yes" --bootappend-live "keyboard-layouts=no" --mode ubuntu --firmware-chroot false
 
     - name: Build Debian Live ISO
       run: |
-        lb build
+        sudo lb build
 
     - name: Check for ISO file
       run: |
@@ -44,4 +44,4 @@ jobs:
       if: always()
       run: |
          lb clean
-         rm -rf chroot
+         sudo rm -rf chroot
