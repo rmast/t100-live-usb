@@ -14,7 +14,7 @@ jobs:
       - name: Install Dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y build-essential kernel-package fakeroot libncurses5-dev libssl-dev ccache bison flex libelf-dev libudev-dev libpci-dev libiberty-dev debhelper dpkg-dev
+          sudo apt-get install -y build-essential fakeroot libncurses5-dev libssl-dev ccache bison flex libelf-dev libudev-dev libpci-dev libiberty-dev debhelper dpkg-dev
 
       # Download and compile the custom kernel
       - name: Download and Compile Custom Kernel
@@ -50,9 +50,9 @@ jobs:
           echo "CONFIG_VIDEO_ATOMISP_MSRLIST_HELPER=y" >> .config
           echo "CONFIG_VIDEO_ATOMISP_MT9M114=y" >> .config
           echo "CONFIG_VIDEO_ATOMISP_GC0310=y" >> .config
-          # Compile the kernel and build .deb packages
-          make -j$(nproc) bindeb-pkg INSTALL_MOD_STRIP=1
-          
+          # Compile the kernel
+          make -j$(nproc) deb-pkg LOCALVERSION=-custom KDEB_PKGVERSION=$(make kernelversion)-1
+
       # Store the generated .deb files as artifacts
       - name: Upload Kernel .deb Files
         uses: actions/upload-artifact@v3
