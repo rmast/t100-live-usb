@@ -5,7 +5,7 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-22.04
 
     steps:
     - name: Checkout code
@@ -27,8 +27,8 @@ jobs:
         cd live-build
         
         # Initialize live-build configuration
-        lb config --distribution noble --archive-areas "main contrib non-free non-free-firmware" --debian-installer live --firmware-chroot false
-        
+        lb config --distribution jammy --archive-areas "main contrib non-free non-free-firmware" --debian-installer live --firmware-chroot false
+
         # Create necessary directories
         mkdir -p config/packages.chroot config/package-lists config/hooks/normal config/includes.chroot/etc/default config/includes.chroot/lib
 
