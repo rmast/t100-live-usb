@@ -39,7 +39,6 @@ jobs:
           --debian-installer live \
           --debian-installer-distribution noble \
           --archive-areas "main restricted universe multiverse" \
-          --updates true \
           --security true \
           --mirror-bootstrap "http://archive.ubuntu.com/ubuntu/" \
           --mirror-binary "http://archive.ubuntu.com/ubuntu/" \
@@ -49,6 +48,7 @@ jobs:
           --parent-mirror-binary-security "http://security.ubuntu.com/ubuntu/" \
           --mirror-chroot-security "http://security.ubuntu.com/ubuntu/" \
           --apt-recommends false
+          #--updates true \
         
         # Create necessary directories
         mkdir -p config/packages.chroot config/package-lists config/hooks/normal config/includes.chroot/etc/default config/includes.chroot/lib
