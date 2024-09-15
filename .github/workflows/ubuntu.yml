@@ -1,0 +1,95 @@
+name: Build Ubuntu Live Image
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4.1.7
+
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y wget live-build
+        sudo apt-get install -y build-essential fakeroot libncurses5-dev libssl-dev ccache bison flex libelf-dev libudev-dev libpci-dev libiberty-dev debhelper dpkg-dev debootstrap gpg debian-archive-keyring
+        wget https://ftp.debian.org/debian/pool/main/l/live-build/live-build_20230502_all.deb
+#        sudo dpkg -i live-build_20230502_all.deb
+        #!/bin/bash -x
+        # Patch for Debian bug 1032408 (see bugs.debian.org)
+#        sudo patch -p1 -N -d /usr/lib/live/build <patches/binary_rootfs.patch
+        # Patches for Debian bug 1043133 (see bugs.debian.org)
+#        sudo patch -p1 -N -d /usr/lib/live/build <patches/chroot_firmware.patch
+#        sudo patch -p1 -N -d /usr/lib/live/build <patches/installer_debian-installer.patch
+        # Patch to display boot menu for 10 seconds before booting
+#        sudo patch -p1 -N -d /usr/share/live/build/bootloaders/isolinux <patches/isolinux.cfg.patch
+    - name: Configure live-build for Debian with Custom Kernel and Initrd
+      run: |
+        mkdir -p live-build
+        cd live-build
+        
+        # Initialize live-build configuration
+        lb config --distribution noble --archive-areas "main contrib non-free non-free-firmware" --firmware-chroot false
+        
+        # Create necessary directories
+        mkdir -p config/packages.chroot config/package-lists config/hooks/normal config/includes.chroot/etc/default config/includes.chroot/lib
+        
+        # Create package list
+        cat << EOF > config/package-lists/my.list.chroot
+        efivar
+        efibootmgr
+        grub-efi-amd64
+        linux-image-amd64
+        firmware-linux
+        firmware-linux-nonfree
+        EOF
+        
+        # Create GRUB default configuration
+        echo 'GRUB_TIMEOUT=5' > config/includes.chroot/etc/default/grub
+        
+    - name: Build Debian Live ISO
+      run: |
+        cd live-build
+        sudo lb clean
+        sudo lb config
+        sudo lb build
+      continue-on-error: true
+
+    - name: Display build logs
+      if: always()
+      run: |
+        cd live-build
+        if [ -f .build/logs/binary ]; then
+          echo "Binary build log:"
+          cat .build/logs/binary
+        fi
+        if [ -f .build/logs/chroot ]; then
+          echo "Chroot build log:"
+          cat .build/logs/chroot
+        fi
+    - name: Check for ISO file
+      run: |
+        if [ -f live-build/live-image-amd64.hybrid.iso ]; then
+          echo "ISO file created successfully"
+        else
+          echo "Error: ISO file not created"
+          ls -R live-build
+          exit 1
+        fi
+    - name: Upload Live ISO
+      if: success()
+      uses: actions/upload-artifact@v4
+      with:
+        name: debian-live-custom-kernel-initrd.iso
+        path: live-build/live-image-amd64.hybrid.iso
+
+    - name: Clean up
+      if: always()
+      run: |
+        cd live-build
+        sudo lb clean
+        sudo rm -rf chroot
+Update main.yml · rmast/t100-live-usb@ddbae8e
