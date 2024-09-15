@@ -21,6 +21,9 @@ jobs:
         run: |
           # Define the kernel version
           KERNEL_VERSION=6.10.7
+          # Create a directory for our build
+          mkdir -p kernel-build
+          cd kernel-build
           # Download the kernel source
           wget https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-${KERNEL_VERSION}.tar.xz
           tar -xvf linux-${KERNEL_VERSION}.tar.xz
@@ -52,15 +55,15 @@ jobs:
           echo "CONFIG_VIDEO_ATOMISP_GC0310=y" >> .config
           # Compile the kernel
           make -j$(nproc)
-          # Compile and install modules
-          sudo make modules_install
+          # Compile and install modules to a local directory
+          make INSTALL_MOD_PATH=../modules modules_install
 
       # Package the kernel
       - name: Package Kernel
         run: |
           # Ensure KERNEL_VERSION is set
           KERNEL_VERSION=6.10.7
-          cd linux-${KERNEL_VERSION}
+          cd kernel-build/linux-${KERNEL_VERSION}
           # Create a temporary directory for packaging
           mkdir -p ../kernel-package/DEBIAN
           mkdir -p ../kernel-package/boot
@@ -70,8 +73,8 @@ jobs:
           # Copy System.map and config
           cp System.map ../kernel-package/boot/System.map-${KERNEL_VERSION}-custom
           cp .config ../kernel-package/boot/config-${KERNEL_VERSION}-custom
-          # Copy modules
-          cp -r /lib/modules/${KERNEL_VERSION}-custom ../kernel-package/lib/modules/
+          # Copy modules from our local modules directory
+          cp -r ../modules/lib/modules/${KERNEL_VERSION} ../kernel-package/lib/modules/${KERNEL_VERSION}-custom
           # Create control file
           cat << EOF > ../kernel-package/DEBIAN/control
           Package: linux-image-${KERNEL_VERSION}-custom
@@ -99,4 +102,4 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: kernel-deb
-          path: linux-image-*.deb
+          path: kernel-build/linux-image-*.deb
