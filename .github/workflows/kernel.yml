@@ -1,0 +1,61 @@
+name: Build Noble Custom Kernel
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+      # Checkout the repository
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # Install necessary dependencies
+      - name: Install Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential kernel-package fakeroot libncurses5-dev libssl-dev ccache bison flex libelf-dev libudev-dev libpci-dev libiberty-dev debhelper dpkg-dev
+
+      # Download and compile the custom kernel
+      - name: Download and Compile Custom Kernel
+        run: |
+          # Define the kernel version
+          KERNEL_VERSION=6.10.7
+          # Download the kernel source
+          wget https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-${KERNEL_VERSION}.tar.xz
+          tar -xvf linux-${KERNEL_VERSION}.tar.xz
+          cd linux-${KERNEL_VERSION}
+          # Generate default config
+          make defconfig
+          # Automatically modify the .config file to set the required parameters
+          # Enable and set the following kernel options
+          sed -i 's/# CONFIG_IPU_BRIDGE is not set/CONFIG_IPU_BRIDGE=y/' .config
+          sed -i 's/# CONFIG_VIDEO_INTEL_IPU6 is not set/CONFIG_VIDEO_INTEL_IPU6=y/' .config
+          sed -i 's/# CONFIG_INTEL_VSC is not set/CONFIG_INTEL_VSC=y/' .config
+          sed -i 's/# CONFIG_VIDEO_IPU3_CIO2 is not set/CONFIG_VIDEO_IPU3_CIO2=y/' .config
+          sed -i 's/# CONFIG_VIDEO_ATOMISP is not set/CONFIG_VIDEO_ATOMISP=y/' .config
+          sed -i 's/# CONFIG_VIDEO_ATOMISP_OV2722 is not set/CONFIG_VIDEO_ATOMISP_OV2722=y/' .config
+          sed -i 's/# CONFIG_VIDEO_ATOMISP_GC2235 is not set/CONFIG_VIDEO_ATOMISP_GC2235=y/' .config
+          sed -i 's/# CONFIG_VIDEO_ATOMISP_MSRLIST_HELPER is not set/CONFIG_VIDEO_ATOMISP_MSRLIST_HELPER=y/' .config
+          sed -i 's/# CONFIG_VIDEO_ATOMISP_MT9M114 is not set/CONFIG_VIDEO_ATOMISP_MT9M114=y/' .config
+          sed -i 's/# CONFIG_VIDEO_ATOMISP_GC0310 is not set/CONFIG_VIDEO_ATOMISP_GC0310=y/' .config
+          # Alternatively, append to the config if they aren't present at all
+          echo "CONFIG_IPU_BRIDGE=y" >> .config
+          echo "CONFIG_VIDEO_INTEL_IPU6=y" >> .config
+          echo "CONFIG_INTEL_VSC=y" >> .config
+          echo "CONFIG_VIDEO_IPU3_CIO2=y" >> .config
+          echo "CONFIG_VIDEO_ATOMISP=y" >> .config
+          echo "CONFIG_VIDEO_ATOMISP_OV2722=y" >> .config
+          echo "CONFIG_VIDEO_ATOMISP_GC2235=y" >> .config
+          echo "CONFIG_VIDEO_ATOMISP_MSRLIST_HELPER=y" >> .config
+          echo "CONFIG_VIDEO_ATOMISP_MT9M114=y" >> .config
+          echo "CONFIG_VIDEO_ATOMISP_GC0310=y" >> .config
+          # Compile the kernel and build .deb packages
+          make -j$(nproc) bindeb-pkg INSTALL_MOD_STRIP=1
+          
+      # Store the generated .deb files as artifacts
+      - name: Upload Kernel .deb Files
+        uses: actions/upload-artifact@v3
+        with:
+          name: kernel-debs
+          path: ../*.deb
