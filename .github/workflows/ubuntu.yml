@@ -32,7 +32,7 @@ jobs:
         cd live-build
         
         # Initialize live-build configuration
-        lb config --distribution noble --archive-areas "main contrib non-free non-free-firmware" --firmware-chroot false
+        lb config --distribution noble --archive-areas "main contrib non-free non-free-firmware" --firmware-chroot true
         
         # Create necessary directories
         mkdir -p config/packages.chroot config/package-lists config/hooks/normal config/includes.chroot/etc/default config/includes.chroot/lib
@@ -61,7 +61,7 @@ jobs:
         
         # Install linux-firmware package to address missing firmware warnings
         apt-get update
-        apt-get install -y syslinux
+        apt-get install -y syslinux syslinux-common pxelinux
         
         # Install grub-pc after initial setup
         DEBIAN_FRONTEND=noninteractive apt-get install -y grub-pc
