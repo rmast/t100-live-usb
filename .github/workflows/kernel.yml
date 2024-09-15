@@ -14,7 +14,7 @@ jobs:
       - name: Install Dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y build-essential fakeroot libncurses5-dev libssl-dev ccache bison flex libelf-dev libudev-dev libpci-dev libiberty-dev debhelper dpkg-dev
+          sudo apt-get install -y build-essential fakeroot libncurses5-dev libssl-dev ccache bison flex libelf-dev libudev-dev libpci-dev libiberty-dev
 
       # Download and compile the custom kernel
       - name: Download and Compile Custom Kernel
@@ -51,11 +51,50 @@ jobs:
           echo "CONFIG_VIDEO_ATOMISP_MT9M114=y" >> .config
           echo "CONFIG_VIDEO_ATOMISP_GC0310=y" >> .config
           # Compile the kernel
-          make -j$(nproc) deb-pkg LOCALVERSION=-custom KDEB_PKGVERSION=$(make kernelversion)-1
+          make -j$(nproc)
+          # Compile and install modules
+          sudo make modules_install
 
-      # Store the generated .deb files as artifacts
-      - name: Upload Kernel .deb Files
+      # Package the kernel
+      - name: Package Kernel
+        run: |
+          cd linux-${KERNEL_VERSION}
+          # Create a temporary directory for packaging
+          mkdir -p ../kernel-package/DEBIAN
+          mkdir -p ../kernel-package/boot
+          mkdir -p ../kernel-package/lib/modules
+          # Copy kernel image
+          cp arch/x86/boot/bzImage ../kernel-package/boot/vmlinuz-${KERNEL_VERSION}-custom
+          # Copy System.map and config
+          cp System.map ../kernel-package/boot/System.map-${KERNEL_VERSION}-custom
+          cp .config ../kernel-package/boot/config-${KERNEL_VERSION}-custom
+          # Copy modules
+          cp -r /lib/modules/${KERNEL_VERSION}-custom ../kernel-package/lib/modules/
+          # Create control file
+          cat << EOF > ../kernel-package/DEBIAN/control
+          Package: linux-image-${KERNEL_VERSION}-custom
+          Version: ${KERNEL_VERSION}-1
+          Architecture: amd64
+          Maintainer: Your Name <your.email@example.com>
+          Description: Custom Linux kernel
+           This package contains a custom compiled Linux kernel.
+          EOF
+          # Create postinst script
+          cat << EOF > ../kernel-package/DEBIAN/postinst
+          #!/bin/sh
+          set -e
+          depmod ${KERNEL_VERSION}-custom
+          update-initramfs -c -k ${KERNEL_VERSION}-custom
+          update-grub
+          EOF
+          chmod 755 ../kernel-package/DEBIAN/postinst
+          # Build the package
+          cd ..
+          dpkg-deb --build kernel-package linux-image-${KERNEL_VERSION}-custom.deb
+
+      # Store the generated .deb file as artifact
+      - name: Upload Kernel .deb File
         uses: actions/upload-artifact@v3
         with:
-          name: kernel-debs
-          path: ../*.deb
+          name: kernel-deb
+          path: linux-image-*.deb
