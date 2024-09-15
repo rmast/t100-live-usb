@@ -4,7 +4,7 @@ on: [push]
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
 
     steps:
     - name: Checkout code
@@ -13,78 +13,12 @@ jobs:
     - name: Install dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y wget
+        sudo apt-get install -y wget live-build
         sudo apt-get install -y build-essential fakeroot libncurses5-dev libssl-dev ccache bison flex libelf-dev libudev-dev libpci-dev libiberty-dev debhelper dpkg-dev debootstrap gpg debian-archive-keyring
-        wget https://ftp.debian.org/debian/pool/main/l/live-build/live-build_20230502_all.deb
-        sudo dpkg -i live-build_20230502_all.deb
+
         #!/bin/bash -x
-        # Patch for Debian bug 1032408 (see bugs.debian.org)
-        sudo patch -p1 -N -d /usr/lib/live/build <patches/binary_rootfs.patch
-        # Patches for Debian bug 1043133 (see bugs.debian.org)
-        sudo patch -p1 -N -d /usr/lib/live/build <patches/chroot_firmware.patch
-        sudo patch -p1 -N -d /usr/lib/live/build <patches/installer_debian-installer.patch
         # Patch to display boot menu for 10 seconds before booting
         sudo patch -p1 -N -d /usr/share/live/build/bootloaders/isolinux <patches/isolinux.cfg.patch
-
-    - name: Download and Compile Custom Kernel
-      run: |
-          KERNEL_VERSION=6.10.7
-          wget https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-${KERNEL_VERSION}.tar.xz
-          tar -xvf linux-${KERNEL_VERSION}.tar.xz
-          cd linux-${KERNEL_VERSION}
-          make defconfig
-          sed -i 's/# CONFIG_IPU_BRIDGE is not set/CONFIG_IPU_BRIDGE=y/' .config
-          sed -i 's/# CONFIG_VIDEO_INTEL_IPU6 is not set/CONFIG_VIDEO_INTEL_IPU6=y/' .config
-          sed -i 's/# CONFIG_INTEL_VSC is not set/CONFIG_INTEL_VSC=y/' .config
-          sed -i 's/# CONFIG_VIDEO_IPU3_CIO2 is not set/CONFIG_VIDEO_IPU3_CIO2=y/' .config
-          sed -i 's/# CONFIG_VIDEO_ATOMISP is not set/CONFIG_VIDEO_ATOMISP=y/' .config
-          sed -i 's/# CONFIG_VIDEO_ATOMISP_OV2722 is not set/CONFIG_VIDEO_ATOMISP_OV2722=y/' .config
-          sed -i 's/# CONFIG_VIDEO_ATOMISP_GC2235 is not set/CONFIG_VIDEO_ATOMISP_GC2235=y/' .config
-          sed -i 's/# CONFIG_VIDEO_ATOMISP_MSRLIST_HELPER is not set/CONFIG_VIDEO_ATOMISP_MSRLIST_HELPER=y/' .config
-          sed -i 's/# CONFIG_VIDEO_ATOMISP_MT9M114 is not set/CONFIG_VIDEO_ATOMISP_MT9M114=y/' .config
-          sed -i 's/# CONFIG_VIDEO_ATOMISP_GC0310 is not set/CONFIG_VIDEO_ATOMISP_GC0310=y/' .config
-          echo "CONFIG_IPU_BRIDGE=y" >> .config
-          echo "CONFIG_VIDEO_INTEL_IPU6=y" >> .config
-          echo "CONFIG_INTEL_VSC=y" >> .config
-          echo "CONFIG_VIDEO_IPU3_CIO2=y" >> .config
-          echo "CONFIG_VIDEO_ATOMISP=y" >> .config
-          echo "CONFIG_VIDEO_ATOMISP_OV2722=y" >> .config
-          echo "CONFIG_VIDEO_ATOMISP_GC2235=y" >> .config
-          echo "CONFIG_VIDEO_ATOMISP_MSRLIST_HELPER=y" >> .config
-          echo "CONFIG_VIDEO_ATOMISP_MT9M114=y" >> .config
-          echo "CONFIG_VIDEO_ATOMISP_GC0310=y" >> .config
-          # Enable all modules
-          make oldconfig
-          sed -i 's/=m$/=y/' .config
-          # Build kernel and modules
-          make -j$(nproc) bindeb-pkg
-          # Move the kernel packages to a known location
-          mkdir -p ../custom-kernel-debs
-          mv ../*.deb ../custom-kernel-debs/
-          ls -al ../custom-kernel-debs/
-
-    - name: Create Custom Initrd
-      run: |
-          KERNEL_VERSION=6.10.7
-          
-          # Install necessary tools
-          sudo apt-get install -y initramfs-tools
-          
-          # Create a temporary directory for initrd creation
-          mkdir -p custom_initrd
-          cd custom_initrd
-          
-          # Install the custom kernel modules
-          sudo dpkg -i ../custom-kernel-debs/linux-image-${KERNEL_VERSION}_*.deb
-          
-          # Copy firmware files
-          sudo cp -R /lib/firmware /lib/firmware-custom
-          
-          # Create the initrd with the custom kernel modules and firmware
-          sudo mkinitramfs -o ../initrd.img-${KERNEL_VERSION}-custom ${KERNEL_VERSION}-custom
-          
-          # Move back to the main directory
-          cd ..
 
     - name: Configure live-build for Debian with Custom Kernel and Initrd
       run: |
@@ -92,20 +26,11 @@ jobs:
         cd live-build
         
         # Initialize live-build configuration
-        lb config --distribution bookworm --archive-areas "main contrib non-free non-free-firmware" --debian-installer none --firmware-chroot true
+        lb config --distribution noble --archive-areas "main contrib non-free non-free-firmware" --debian-installer none --firmware-chroot true
         
         # Create necessary directories
         mkdir -p config/packages.chroot config/package-lists config/hooks/normal config/includes.chroot/etc/default config/includes.chroot/lib
 
-        # Copy custom kernel .deb files to live-build package directory
-        cp ../custom-kernel-debs/*.deb config/packages.chroot/
-        
-        # Copy custom initrd to live-build package directory
-        cp ../initrd.img-6.10.7-custom config/packages.chroot/
-        
-        # Copy firmware files
-        cp -R /lib/firmware-custom config/includes.chroot/lib/firmware
-        
         # Create package list
         cat << EOF > config/package-lists/my.list.chroot
         efivar
@@ -118,40 +43,6 @@ jobs:
         
         # Create GRUB default configuration
         echo 'GRUB_TIMEOUT=5' > config/includes.chroot/etc/default/grub
-        
-        # Create a hook to install custom kernel, update initramfs, and install grub-pc
-        cat << EOF > config/hooks/normal/0100-update-initramfs.hook.chroot
-        #!/bin/sh
-        set -e
-        
-        # Ensure /dev, /proc, and /sys are mounted
-        mount -t devtmpfs devtmpfs /dev || true
-        mount -t proc proc /proc || true
-        mount -t sysfs sysfs /sys || true
-        
-        # Install linux-firmware package to address missing firmware warnings
-        apt-get update
-        apt-get install -y firmware-linux-nonfree firmware-linux-free amd64-microcode intel-microcode
-        
-        # Install the custom kernel
-        dpkg -i /root/packages/linux-image-6.10.7_*.deb
-        
-        # Update initramfs for the new kernel
-        update-initramfs -c -k 6.10.7
-        
-        # Install grub-pc after initial setup
-        DEBIAN_FRONTEND=noninteractive apt-get install -y grub-pc
-        
-        # Update GRUB configuration
-        update-grub
-        
-        # Unmount the filesystems
-        umount /sys || true
-        umount /proc || true
-        umount /dev || true
-        EOF
-        
-        chmod +x config/hooks/normal/0100-update-initramfs.hook.chroot
 
     - name: Build Debian Live ISO
       run: |
@@ -159,20 +50,7 @@ jobs:
         sudo lb clean
         sudo lb config
         sudo lb build
-      continue-on-error: true
-
-    - name: Display build logs
-      if: always()
-      run: |
-        cd live-build
-        if [ -f .build/logs/binary ]; then
-          echo "Binary build log:"
-          cat .build/logs/binary
-        fi
-        if [ -f .build/logs/chroot ]; then
-          echo "Chroot build log:"
-          cat .build/logs/chroot
-        fi
+#      continue-on-error: true
 
     - name: Check for ISO file
       run: |
