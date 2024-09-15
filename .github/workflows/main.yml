@@ -1,11 +1,11 @@
-name: Build Noble Live Image
+name: Build Bookworm Live Image
 
 on:
   workflow_dispatch:
 
 jobs:
   build:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-22.04
 
     steps:
     - name: Checkout code
@@ -17,71 +17,12 @@ jobs:
 
     - name: Configure live-build for Debian with Custom Kernel and Initrd
       run: |
-        #!/bin/bash
-        # Simplified script to build Ubuntu Noble Live CD for Clonezilla
-        
-        set -e
-        
-        #DRBL_SCRIPT_PATH="${DRBL_SCRIPT_PATH:-/usr/share/drbl}"
-        #. $DRBL_SCRIPT_PATH/sbin/drbl-conf-functions
-        #. /etc/drbl/drbl-ocs.conf
-        #. $DRBL_SCRIPT_PATH/sbin/ocs-functions
-        
-        debian_dist="noble"
-        cpu_flavor="amd64"
-        workdir="ubuntu-live"
-        mirror_url="$ubuntu_mirror_url_def"
-        mirror_security_url="$ubuntu_mirror_security_url_def"
-        DRBL_REPOSITORY_URL="$DRBL_REPOSITORY_URL_def"
-        categories="main restricted universe multiverse"
-        pkgs="$PKG_FROM_DBN_WHICH_OCS_LIVE_NEED drbl $PKG_FROM_DRBL_FOR_CLONEZILLA_LIVE"
-        
-        build_it() {
-          mkdir ${workdir}
-          cd ${workdir}
-          
-          lb config --distribution $debian_dist --parent-distribution $debian_dist --archive-areas "$categories" --parent-archive-areas "$categories"
-          lb config --mode ubuntu
-          lb config --parent-mirror-bootstrap $mirror_url --parent-mirror-binary $mirror_url --parent-mirror-chroot $mirror_url --parent-mirror-chroot-security $mirror_security_url --parent-mirror-binary-security $mirror_security_url --parent-mirror-debian-installer $mirror_url
-          lb config --mirror-bootstrap $mirror_url
-          lb config --mirror-chroot $mirror_url --mirror-chroot-security $mirror_security_url
-          lb config --debootstrap-options="--variant=minbase"
-          lb config --apt apt --apt-options "--yes --no-upgrade --allow-downgrades" --apt-recommends false
-          lb config --firmware-binary false --firmware-chroot false
-          lb config --security true
-          lb config --initramfs live-boot
-          lb config --bootappend-live "boot=live union=overlay config username=user hostname=$debian_dist"
-          lb config --bootappend-live-failsafe "boot=live union=overlay config memtest noapic noapm nodma nomce nolapic nomodeset nosmp nosplash vga=normal"
-          lb config --architecture $cpu_flavor
-          lb config --linux-flavours generic
-          lb config --memtest none
-          lb config --debian-installer false
-          lb config --win32-loader false
-          lb config --zsync false
-          lb config --cache-indices true
-          lb config --cache-packages false
-          lb config --apt-indices false
-          lb config --apt-source-archives true
-          lb config --firmware-binary false --firmware-chroot false
-          lb config --bootloaders "syslinux,grub-efi"
-          lb config --binary-images iso-hybrid
-          lb config --initsystem systemd
-          
-          echo "$pkgs" > config/package-lists/clonezilla-packages.list.chroot
-          
-          cat << EOF > config/archives/drbl-repository.list
-        deb $DRBL_REPOSITORY_URL drbl stable live-ubuntu-stable
-        EOF
-          
-          wget -O config/archives/drbl-gpg.key $DRBL_GPG_KEY_URL
-          
-          lb build
-        }
-        
-        check_if_root
-        build_it
-        
-        mv -f ${workdir}/live-image*.iso ubuntu-live-for-ocs-$(date +%Y%m%d).iso
+        sudo lb config --distribution bookworm --debian-installer live --binary-images netboot --debconf-frontend noninteractive --chroot-filesystem squashfs --archive-areas "main restricted universe multiverse" --apt-options "--yes" --bootappend-live "keyboard-layouts=no" --mode debian  --firmware-chroot false
+
+    - name: Build Debian Live ISO
+      run: |
+        sudo lb build
+
     - name: Check for ISO file
       run: |
         if [ -f live-image-amd64.hybrid.iso ]; then
