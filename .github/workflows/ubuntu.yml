@@ -5,7 +5,7 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-22.04
 
     steps:
     - name: Checkout code
@@ -18,15 +18,15 @@ jobs:
         sudo apt-get install -y build-essential fakeroot libncurses5-dev libssl-dev ccache bison flex libelf-dev libudev-dev libpci-dev libiberty-dev debhelper dpkg-dev debootstrap gpg ubuntu-keyring
         wget https://ftp.debian.org/debian/pool/main/l/live-build/live-build_20240810_all.deb
         sudo dpkg -i live-build_20240810_all.deb
-    - name: Configure live-build for Ubuntu Noble
+    - name: Configure live-build for Ubuntu Jammy
       run: |
         mkdir -p live-build
         cd live-build
         
         lb config \
-          --distribution noble \
+          --distribution jammy \
           --debian-installer live \
-          --debian-installer-distribution noble \
+          --debian-installer-distribution jammy \
           --archive-areas "main restricted universe multiverse" \
           --security true \
           --updates true \
