@@ -36,9 +36,6 @@ jobs:
         efivar
         efibootmgr
         grub-efi-amd64
-        linux-image-amd64
-        firmware-linux
-        firmware-linux-nonfree
         EOF
         
         # Create GRUB default configuration
